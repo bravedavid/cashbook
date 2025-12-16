@@ -48,6 +48,35 @@ export interface RecognitionResponse {
 	error?: string;
 }
 
+export interface AuthMeResponse {
+	success: boolean;
+	user?: { id: string; username: string };
+	error?: string;
+}
+
+export interface TransactionsResponse {
+	success: boolean;
+	transactions?: Transaction[];
+	error?: string;
+}
+
+export interface TransactionResponse {
+	success: boolean;
+	transaction?: Transaction;
+	error?: string;
+}
+
+export interface DeleteResponse {
+	success: boolean;
+	error?: string;
+}
+
+export interface LoginResponse {
+	success: boolean;
+	error?: string;
+	user?: { id: string; username: string };
+}
+
 export const INCOME_CATEGORIES: Category[] = [
 	{ id: 'salary', name: '工资', icon: '💼', color: '#10b981' },
 	{ id: 'bonus', name: '奖金', icon: '🎁', color: '#3b82f6' },

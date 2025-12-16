@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 		WORKER_SELF_REFERENCE: Fetcher /* cashbook */;
 		IMAGES: ImagesBinding;
 		ASSETS: Fetcher;
+		DB: D1Database;
 	}
 }
 interface CloudflareEnv extends Cloudflare.Env {}

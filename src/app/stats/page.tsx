@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Transaction } from '@/types';
-import { storage } from '@/lib/storage';
+import { Transaction, TransactionsResponse } from '@/types';
 import { calculateTotal, groupByCategory, groupByDate, formatCurrency } from '@/lib/utils';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
 import {
@@ -45,8 +44,20 @@ export default function StatsPage() {
 	const [timeRange, setTimeRange] = useState<'all' | 'month' | 'year'>('all');
 
 	useEffect(() => {
-		setTransactions(storage.getTransactions());
+		loadTransactions();
 	}, []);
+
+	const loadTransactions = async () => {
+		try {
+			const response = await fetch('/api/transactions');
+			const data: TransactionsResponse = await response.json();
+			if (data.success) {
+				setTransactions(data.transactions || []);
+			}
+		} catch (error) {
+			console.error('Failed to load transactions:', error);
+		}
+	};
 
 	const filteredTransactions = useMemo(() => {
 		if (timeRange === 'all') return transactions;

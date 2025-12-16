@@ -1,41 +1,119 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Transaction, TransactionFormData } from '@/types';
-import { storage } from '@/lib/storage';
+import { useRouter } from 'next/navigation';
+import { Transaction, TransactionFormData, AuthMeResponse, TransactionsResponse, TransactionResponse, DeleteResponse } from '@/types';
 import { calculateTotal, calculateBalance } from '@/lib/utils';
 import TransactionForm from '@/components/TransactionForm';
 import TransactionList from '@/components/TransactionList';
 import StatsCard from '@/components/StatsCard';
-import { BarChart3, Upload, Settings } from 'lucide-react';
+import { BarChart3, Upload, Settings, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
+	const router = useRouter();
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [showForm, setShowForm] = useState(false);
+	const [user, setUser] = useState<{ id: string; username: string } | null>(null);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		setTransactions(storage.getTransactions());
+		loadUser();
+		loadTransactions();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const handleAddTransaction = (formData: TransactionFormData) => {
-		const newTransaction = storage.addTransaction({
-			type: formData.type,
-			amount: parseFloat(formData.amount),
-			category: formData.category,
-			description: formData.description,
-			date: formData.date,
-		});
-		setTransactions([...transactions, newTransaction]);
-		setShowForm(false);
-	};
-
-	const handleDeleteTransaction = (id: string) => {
-		if (confirm('确定要删除这条记录吗？')) {
-			storage.deleteTransaction(id);
-			setTransactions(transactions.filter((t) => t.id !== id));
+	const loadUser = async () => {
+		try {
+			const response = await fetch('/api/auth/me');
+			const data: AuthMeResponse = await response.json();
+			if (data.success) {
+				setUser(data.user || null);
+			} else {
+				router.push('/login');
+			}
+		} catch (error) {
+			console.error('Failed to load user:', error);
+			router.push('/login');
+		} finally {
+			setLoading(false);
 		}
 	};
+
+	const loadTransactions = async () => {
+		try {
+			const response = await fetch('/api/transactions');
+			const data: TransactionsResponse = await response.json();
+			if (data.success) {
+				setTransactions(data.transactions || []);
+			}
+		} catch (error) {
+			console.error('Failed to load transactions:', error);
+		}
+	};
+
+	const handleAddTransaction = async (formData: TransactionFormData) => {
+		try {
+			const response = await fetch('/api/transactions', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(formData),
+			});
+
+			const data: TransactionResponse = await response.json();
+			if (data.success) {
+				setTransactions([data.transaction!, ...transactions]);
+				setShowForm(false);
+			} else {
+				alert('添加失败：' + (data.error || '未知错误'));
+			}
+		} catch (error) {
+			console.error('Failed to add transaction:', error);
+			alert('添加失败，请稍后重试');
+		}
+	};
+
+	const handleDeleteTransaction = async (id: string) => {
+		if (!confirm('确定要删除这条记录吗？')) {
+			return;
+		}
+
+		try {
+			const response = await fetch(`/api/transactions/${id}`, {
+				method: 'DELETE',
+			});
+
+			const data: DeleteResponse = await response.json();
+			if (data.success) {
+				setTransactions(transactions.filter((t) => t.id !== id));
+			} else {
+				alert('删除失败：' + (data.error || '未知错误'));
+			}
+		} catch (error) {
+			console.error('Failed to delete transaction:', error);
+			alert('删除失败，请稍后重试');
+		}
+	};
+
+	const handleLogout = async () => {
+		try {
+			await fetch('/api/auth/logout', { method: 'POST' });
+			router.push('/login');
+			router.refresh();
+		} catch (error) {
+			console.error('Failed to logout:', error);
+		}
+	};
+
+	if (loading) {
+		return (
+			<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+				<div className="text-gray-500 dark:text-gray-400">加载中...</div>
+			</div>
+		);
+	}
 
 	const income = calculateTotal(transactions, 'income');
 	const expense = calculateTotal(transactions, 'expense');
@@ -53,6 +131,12 @@ export default function Home() {
 						<p className="text-gray-500 dark:text-gray-400">记录每一笔收支，掌控你的财务状况</p>
 					</div>
 					<div className="flex items-center gap-3">
+						{user && (
+							<div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+								<User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+								<span className="text-sm text-gray-700 dark:text-gray-300">{user.username}</span>
+							</div>
+						)}
 						<Link
 							href="/stats"
 							className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-md"
@@ -67,6 +151,13 @@ export default function Home() {
 						>
 							<Settings className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 						</Link>
+						<button
+							onClick={handleLogout}
+							className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+							title="登出"
+						>
+							<LogOut className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+						</button>
 					</div>
 				</div>
 

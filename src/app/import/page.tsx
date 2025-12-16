@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { RecognitionResult, TransactionItem, RecognitionResponse } from '@/types';
-import { storage } from '@/lib/storage';
 import { fileToBase64 } from '@/lib/imageUtils';
 import { settings } from '@/lib/settings';
 import ImageUpload from '@/components/ImageUpload';
@@ -124,22 +123,38 @@ export default function ImportPage() {
 		await recognizeImage(result);
 	};
 
-	const handleConfirm = (id: string, transactions: TransactionItem[]) => {
-		// 保存交易记录
-		transactions.forEach((transaction) => {
-			storage.addTransaction({
-				type: transaction.type,
-				amount: transaction.amount,
-				category: transaction.category,
-				description: transaction.description,
-				date: transaction.date,
-			});
-		});
+	const handleConfirm = async (id: string, transactions: TransactionItem[]) => {
+		try {
+			// 批量保存交易记录
+			for (const transaction of transactions) {
+				const response = await fetch('/api/transactions', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						type: transaction.type,
+						amount: transaction.amount.toString(),
+						category: transaction.category,
+						description: transaction.description,
+						date: transaction.date,
+					}),
+				});
 
-		setSavedCount((prev) => prev + transactions.length);
+				if (!response.ok) {
+					const data = (await response.json()) as { error?: string };
+					throw new Error(data.error || '保存失败');
+				}
+			}
 
-		// 移除已确认的结果
-		setRecognitionResults((prev) => prev.filter((r) => r.id !== id));
+			setSavedCount((prev) => prev + transactions.length);
+
+			// 移除已确认的结果
+			setRecognitionResults((prev) => prev.filter((r) => r.id !== id));
+		} catch (error) {
+			console.error('Failed to save transactions:', error);
+			alert('保存失败：' + (error instanceof Error ? error.message : '未知错误'));
+		}
 	};
 
 	const handleRemove = (id: string) => {
