@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { RecognitionResult, TransactionItem } from '@/types';
 import { storage } from '@/lib/storage';
 import { fileToBase64 } from '@/lib/imageUtils';
@@ -12,9 +11,7 @@ import { ArrowLeft, CheckCircle2, Settings, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ImportPage() {
-	const router = useRouter();
 	const [recognitionResults, setRecognitionResults] = useState<RecognitionResult[]>([]);
-	const [processingIndex, setProcessingIndex] = useState<number>(-1);
 	const [savedCount, setSavedCount] = useState<number>(0);
 	const isProcessingRef = useRef(false);
 	const [hasApiKey, setHasApiKey] = useState(true);
@@ -90,13 +87,10 @@ export default function ImportPage() {
 
 		const pendingResults = recognitionResults.filter((r) => r.status === 'pending');
 		if (pendingResults.length === 0) {
-			setProcessingIndex(-1);
 			return;
 		}
 
 		const nextResult = pendingResults[0];
-		const currentIndex = recognitionResults.findIndex((r) => r.id === nextResult.id);
-		setProcessingIndex(currentIndex);
 		isProcessingRef.current = true;
 
 		// 更新状态为处理中
@@ -160,7 +154,6 @@ export default function ImportPage() {
 
 	const pendingCount = recognitionResults.filter((r) => r.status === 'pending' || r.status === 'processing').length;
 	const successCount = recognitionResults.filter((r) => r.status === 'success').length;
-	const errorCount = recognitionResults.filter((r) => r.status === 'error').length;
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">

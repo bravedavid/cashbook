@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { settings, AppSettings, AVAILABLE_MODELS } from '@/lib/settings';
 import { ArrowLeft, Save, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
-	const router = useRouter();
 	const [formData, setFormData] = useState<AppSettings>({
 		openRouterApiKey: '',
 		model: 'openai/gpt-4o',

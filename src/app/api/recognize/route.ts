@@ -132,16 +132,23 @@ export async function POST(request: NextRequest) {
 
 			// 验证和清理数据
 			transactions = transactions
-				.filter((t: any) => {
+				.filter((t: unknown): t is TransactionItem => {
 					return (
-						t.date &&
-						typeof t.amount === 'number' &&
-						(t.type === 'income' || t.type === 'expense') &&
-						t.category &&
-						t.description
+						typeof t === 'object' &&
+						t !== null &&
+						'date' in t &&
+						'amount' in t &&
+						'type' in t &&
+						'category' in t &&
+						'description' in t &&
+						typeof (t as TransactionItem).date === 'string' &&
+						typeof (t as TransactionItem).amount === 'number' &&
+						((t as TransactionItem).type === 'income' || (t as TransactionItem).type === 'expense') &&
+						typeof (t as TransactionItem).category === 'string' &&
+						typeof (t as TransactionItem).description === 'string'
 					);
 				})
-				.map((t: any) => ({
+				.map((t: TransactionItem) => ({
 					date: t.date,
 					amount: Math.abs(t.amount),
 					type: t.type,
