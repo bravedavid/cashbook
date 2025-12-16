@@ -23,14 +23,15 @@ export async function GET(_request: NextRequest) {
 			const session = await db
 				.prepare('SELECT * FROM sessions WHERE token = ? AND expires_at > datetime("now")')
 				.bind(token)
-				.first();
+				.first<{ user_id: string }>();
 
 			if (!session) {
 				console.log('[Auth/me] Session not found in database or expired');
 				return NextResponse.json({ success: false, error: '未登录：会话不存在或已过期' }, { status: 401 });
 			}
 
-			console.log('[Auth/me] Session found, userId:', session.userId);
+			console.log('[Auth/me] Session found, user_id:', session.user_id);
+			console.log('[Auth/me] Session object:', JSON.stringify(session, null, 2));
 		} catch (dbError) {
 			console.error('[Auth/me] Database error:', dbError);
 			return NextResponse.json(

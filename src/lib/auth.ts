@@ -8,9 +8,10 @@ export interface User {
 
 export interface Session {
 	id: string;
-	userId: string;
+	user_id: string;
 	token: string;
-	expiresAt: string;
+	expires_at: string;
+	created_at: string;
 }
 
 /**
@@ -44,15 +45,21 @@ export async function getCurrentUser(): Promise<User | null> {
 			return null;
 		}
 
-		console.log('[Auth] Session found, userId:', session.userId);
+		console.log('[Auth] Session found, user_id:', session.user_id);
+		console.log('[Auth] Session object:', JSON.stringify(session, null, 2));
+
+		if (!session.user_id) {
+			console.error('[Auth] user_id is undefined in session:', session);
+			return null;
+		}
 
 		const user = await db
 			.prepare('SELECT id, username FROM users WHERE id = ?')
-			.bind(session.userId)
+			.bind(session.user_id)
 			.first<User>();
 
 		if (!user) {
-			console.error('[Auth] User not found for userId:', session.userId);
+			console.error('[Auth] User not found for user_id:', session.user_id);
 			return null;
 		}
 
