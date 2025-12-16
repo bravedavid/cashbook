@@ -24,13 +24,26 @@ export async function POST(request: NextRequest) {
 
 		const response = NextResponse.json({ success: true, user: { id: user.id, username: user.username } });
 
-		// 设置 cookie
+		// 判断是否是 HTTPS（生产环境）
+		// 在 Cloudflare Workers 中，所有请求都通过 HTTPS
+		const isSecure = request.url.startsWith('https://') || request.headers.get('x-forwarded-proto') === 'https';
+
+		// 设置 cookie - 确保在生产环境中正确设置
 		response.cookies.set('session_token', token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
+			secure: isSecure, // 在生产环境中必须是 true
 			sameSite: 'lax',
 			maxAge: 7 * 24 * 60 * 60, // 7天
 			path: '/',
+			// 不设置 domain，让浏览器自动处理（支持子域名）
+		});
+
+		console.log('[Auth/login] Cookie set:', {
+			secure: isSecure,
+			url: request.url,
+			protocol: request.headers.get('x-forwarded-proto'),
+			tokenLength: token.length,
+			cookieHeader: response.headers.get('set-cookie'),
 		});
 
 		return response;

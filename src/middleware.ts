@@ -9,13 +9,17 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// API 路由中的认证路由不需要认证
-	if (pathname.startsWith('/api/auth/login')) {
+	// API 路由中的认证相关路由不需要在 middleware 中验证
+	// 让 API 路由自己处理认证逻辑
+	if (pathname.startsWith('/api/auth/')) {
 		return NextResponse.next();
 	}
 
-	// 检查是否有 session token
-	const token = request.cookies.get('session_token')?.value;
+	// 对于其他 API 路由和页面，检查是否有 session token
+	// 注意：这里只检查 cookie 是否存在，不验证其有效性
+	// 有效性验证由各个 API 路由自己处理
+	const sessionCookie = request.cookies.get('session_token');
+	const token = sessionCookie?.value;
 
 	if (!token) {
 		// 如果是 API 路由，返回 401

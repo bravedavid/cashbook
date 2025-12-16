@@ -22,28 +22,49 @@ export async function getCurrentUser(): Promise<User | null> {
 		const token = cookieStore.get('session_token')?.value;
 
 		if (!token) {
+			console.log('[Auth] No session token found in cookies');
 			return null;
 		}
 
+		console.log('[Auth] Found session token, length:', token.length);
+
 		const db = getD1Database();
+		if (!db) {
+			console.error('[Auth] D1 database not available');
+			throw new Error('D1 database not available');
+		}
+
 		const session = await db
 			.prepare('SELECT * FROM sessions WHERE token = ? AND expires_at > datetime("now")')
 			.bind(token)
 			.first<Session>();
 
 		if (!session) {
+			console.log('[Auth] Session not found or expired for token');
 			return null;
 		}
+
+		console.log('[Auth] Session found, userId:', session.userId);
 
 		const user = await db
 			.prepare('SELECT id, username FROM users WHERE id = ?')
 			.bind(session.userId)
 			.first<User>();
 
-		return user || null;
+		if (!user) {
+			console.error('[Auth] User not found for userId:', session.userId);
+			return null;
+		}
+
+		console.log('[Auth] User found:', user.username);
+		return user;
 	} catch (error) {
-		console.error('Error getting current user:', error);
-		return null;
+		console.error('[Auth] Error getting current user:', error);
+		if (error instanceof Error) {
+			console.error('[Auth] Error message:', error.message);
+			console.error('[Auth] Error stack:', error.stack);
+		}
+		throw error; // 重新抛出错误，让调用者处理
 	}
 }
 
@@ -51,16 +72,50 @@ export async function getCurrentUser(): Promise<User | null> {
  * 创建会话
  */
 export async function createSession(userId: string): Promise<string> {
-	const db = getD1Database();
-	const token = crypto.randomUUID();
-	const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7天后过期
+	try {
+		const db = getD1Database();
+		const token = crypto.randomUUID();
+		const sessionId = crypto.randomUUID();
+		const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7天后过期
 
-	await db
-		.prepare('INSERT INTO sessions (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)')
-		.bind(crypto.randomUUID(), userId, token, expiresAt)
-		.run();
+		console.log('[Auth] Creating session:', {
+			sessionId,
+			userId,
+			tokenLength: token.length,
+			expiresAt,
+		});
 
-	return token;
+		const result = await db
+			.prepare('INSERT INTO sessions (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)')
+			.bind(sessionId, userId, token, expiresAt)
+			.run();
+
+		console.log('[Auth] Session created successfully:', {
+			success: result.success,
+			meta: result.meta,
+		});
+
+		// 验证会话是否真的被保存
+		const verifySession = await db
+			.prepare('SELECT * FROM sessions WHERE token = ?')
+			.bind(token)
+			.first();
+
+		if (!verifySession) {
+			console.error('[Auth] Session was not saved to database!');
+			throw new Error('Failed to save session to database');
+		}
+
+		console.log('[Auth] Session verified in database');
+		return token;
+	} catch (error) {
+		console.error('[Auth] Error creating session:', error);
+		if (error instanceof Error) {
+			console.error('[Auth] Error message:', error.message);
+			console.error('[Auth] Error stack:', error.stack);
+		}
+		throw error;
+	}
 }
 
 /**
