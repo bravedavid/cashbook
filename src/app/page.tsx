@@ -14,6 +14,7 @@ export default function Home() {
 	const router = useRouter();
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [showForm, setShowForm] = useState(false);
+	const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 	const [user, setUser] = useState<{ id: string; username: string } | null>(null);
 	const [loading, setLoading] = useState(true);
 
@@ -73,6 +74,45 @@ export default function Home() {
 			console.error('Failed to add transaction:', error);
 			alert('添加失败，请稍后重试');
 		}
+	};
+
+	const handleUpdateTransaction = async (id: string, formData: TransactionFormData) => {
+		try {
+			const response = await fetch(`/api/transactions/${id}`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					type: formData.type,
+					amount: parseFloat(formData.amount),
+					category: formData.category,
+					description: formData.description,
+					date: formData.date,
+				}),
+			});
+
+			const data: DeleteResponse = await response.json();
+			if (data.success) {
+				// 重新加载交易记录
+				await loadTransactions();
+				setEditingTransaction(null);
+			} else {
+				alert('更新失败：' + (data.error || '未知错误'));
+			}
+		} catch (error) {
+			console.error('Failed to update transaction:', error);
+			alert('更新失败，请稍后重试');
+		}
+	};
+
+	const handleEditTransaction = (transaction: Transaction) => {
+		setEditingTransaction(transaction);
+		setShowForm(false);
+	};
+
+	const handleCancelEdit = () => {
+		setEditingTransaction(null);
 	};
 
 	const handleDeleteTransaction = async (id: string) => {
@@ -168,10 +208,25 @@ export default function Home() {
 					<StatsCard title="余额" amount={balance} type="balance" />
 				</div>
 
-				{/* 添加记录表单 */}
+				{/* 添加/编辑记录表单 */}
 				{showForm ? (
 					<div className="mb-8">
 						<TransactionForm onSubmit={handleAddTransaction} onCancel={() => setShowForm(false)} />
+					</div>
+				) : editingTransaction ? (
+					<div className="mb-8">
+						<TransactionForm
+							mode="edit"
+							initialData={{
+								type: editingTransaction.type,
+								amount: editingTransaction.amount.toString(),
+								category: editingTransaction.category,
+								description: editingTransaction.description,
+								date: editingTransaction.date,
+							}}
+							onSubmit={(formData) => handleUpdateTransaction(editingTransaction.id, formData)}
+							onCancel={handleCancelEdit}
+						/>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -194,7 +249,7 @@ export default function Home() {
 				{/* 交易列表 */}
 				<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
 					<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">最近记录</h2>
-					<TransactionList transactions={recentTransactions} onDelete={handleDeleteTransaction} />
+					<TransactionList transactions={recentTransactions} onDelete={handleDeleteTransaction} onEdit={handleEditTransaction} />
 				</div>
 			</div>
 		</div>

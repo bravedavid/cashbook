@@ -3,14 +3,15 @@
 import { Transaction } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit2 } from 'lucide-react';
 
 interface TransactionListProps {
 	transactions: Transaction[];
 	onDelete: (id: string) => void;
+	onEdit?: (transaction: Transaction) => void;
 }
 
-export default function TransactionList({ transactions, onDelete }: TransactionListProps) {
+export default function TransactionList({ transactions, onDelete, onEdit }: TransactionListProps) {
 	const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
 	const getCategory = (id: string) => allCategories.find((c) => c.id === id);
 
@@ -68,13 +69,24 @@ export default function TransactionList({ transactions, onDelete }: TransactionL
 								{isIncome ? '+' : '-'}
 								{formatCurrency(transaction.amount)}
 							</span>
-							<button
-								onClick={() => onDelete(transaction.id)}
-								className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 hover:text-red-600 transition-colors"
-								title="删除"
-							>
-								<Trash2 className="w-5 h-5" />
-							</button>
+							<div className="flex items-center gap-2">
+								{onEdit && (
+									<button
+										onClick={() => onEdit(transaction)}
+										className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-blue-500 hover:text-blue-600 transition-colors"
+										title="编辑"
+									>
+										<Edit2 className="w-5 h-5" />
+									</button>
+								)}
+								<button
+									onClick={() => onDelete(transaction.id)}
+									className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 hover:text-red-600 transition-colors"
+									title="删除"
+								>
+									<Trash2 className="w-5 h-5" />
+								</button>
+							</div>
 						</div>
 					</div>
 				);

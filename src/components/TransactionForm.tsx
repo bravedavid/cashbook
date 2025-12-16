@@ -7,16 +7,20 @@ import { Plus, X } from 'lucide-react';
 interface TransactionFormProps {
 	onSubmit: (data: TransactionFormData) => void;
 	onCancel?: () => void;
+	initialData?: TransactionFormData;
+	mode?: 'add' | 'edit';
 }
 
-export default function TransactionForm({ onSubmit, onCancel }: TransactionFormProps) {
-	const [formData, setFormData] = useState<TransactionFormData>({
-		type: 'expense',
-		amount: '',
-		category: '',
-		description: '',
-		date: new Date().toISOString().split('T')[0],
-	});
+export default function TransactionForm({ onSubmit, onCancel, initialData, mode = 'add' }: TransactionFormProps) {
+	const [formData, setFormData] = useState<TransactionFormData>(
+		initialData || {
+			type: 'expense',
+			amount: '',
+			category: '',
+			description: '',
+			date: new Date().toISOString().split('T')[0],
+		}
+	);
 
 	const categories = formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
@@ -36,7 +40,7 @@ export default function TransactionForm({ onSubmit, onCancel }: TransactionFormP
 	return (
 		<form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
 			<div className="flex items-center justify-between mb-6">
-				<h2 className="text-xl font-bold text-gray-900 dark:text-white">添加记录</h2>
+				<h2 className="text-xl font-bold text-gray-900 dark:text-white">{mode === 'edit' ? '编辑记录' : '添加记录'}</h2>
 				{onCancel && (
 					<button
 						type="button"
@@ -149,7 +153,7 @@ export default function TransactionForm({ onSubmit, onCancel }: TransactionFormP
 					className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
 				>
 					<Plus className="w-5 h-5" />
-					添加记录
+					{mode === 'edit' ? '保存修改' : '添加记录'}
 				</button>
 			</div>
 		</form>

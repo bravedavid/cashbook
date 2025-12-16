@@ -7,7 +7,7 @@ import { getD1Database } from './db';
 export async function getTransactions(userId: string): Promise<Transaction[]> {
 	const db = getD1Database();
 	const result = await db
-		.prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC, created_at DESC')
+		.prepare('SELECT id, type, amount, category, description, date, created_at as createdAt FROM transactions WHERE user_id = ? ORDER BY date DESC, created_at DESC')
 		.bind(userId)
 		.all<Transaction>();
 
