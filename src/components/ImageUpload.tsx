@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { validateImageFile, createImagePreview } from '@/lib/imageUtils';
 
 interface ImageUploadProps {
@@ -115,6 +115,7 @@ export default function ImageUpload({ onImagesSelected, maxFiles = 10 }: ImageUp
 					{previewFiles.map((file, index) => (
 						<div key={index} className="relative group">
 							<div className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img
 									src={createImagePreview(file)}
 									alt={file.name}

@@ -54,6 +54,7 @@ export default function RecognitionItem({ result, onRetry, onConfirm, onRemove }
 			<div className="flex items-start justify-between mb-4">
 				<div className="flex items-center gap-4 flex-1">
 					<div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+						{/* eslint-disable-next-line @next/next/no-img-element */}
 						<img
 							src={result.imagePreview}
 							alt="预览"

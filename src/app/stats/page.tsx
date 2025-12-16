@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction } from '@/types';
 import { storage } from '@/lib/storage';
-import { calculateTotal, groupByCategory, groupByDate, formatCurrency, formatDate } from '@/lib/utils';
+import { calculateTotal, groupByCategory, groupByDate, formatCurrency } from '@/lib/utils';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
 import {
 	BarChart,

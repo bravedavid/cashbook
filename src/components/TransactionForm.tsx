@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { TransactionFormData, TransactionType, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
+import { TransactionFormData, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
 import { Plus, X } from 'lucide-react';
 
 interface TransactionFormProps {
