@@ -147,9 +147,17 @@ export default function RecognitionItem({ result, onRetry, onConfirm, onRemove }
 					</div>
 					<button
 						onClick={() => onConfirm(result.id, result.transactions!)}
-						className="w-full mt-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+						disabled={result.saving}
+						className="w-full mt-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
 					>
-						确认添加这些记录
+						{result.saving ? (
+							<>
+								<Loader2 className="w-4 h-4 animate-spin" />
+								正在保存...
+							</>
+						) : (
+							'确认添加这些记录'
+						)}
 					</button>
 				</div>
 			)}

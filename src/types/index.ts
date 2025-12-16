@@ -34,6 +34,7 @@ export interface RecognitionResult {
 	status: 'pending' | 'processing' | 'success' | 'error';
 	transactions?: TransactionItem[];
 	error?: string;
+	saving?: boolean; // 是否正在保存
 }
 
 export interface TransactionItem {

@@ -124,6 +124,11 @@ export default function ImportPage() {
 	};
 
 	const handleConfirm = async (id: string, transactions: TransactionItem[]) => {
+		// 设置保存状态，防止重复点击
+		setRecognitionResults((prev) =>
+			prev.map((r) => (r.id === id ? { ...r, saving: true } : r))
+		);
+
 		try {
 			// 批量保存交易记录
 			for (const transaction of transactions) {
@@ -154,6 +159,10 @@ export default function ImportPage() {
 			setRecognitionResults((prev) => prev.filter((r) => r.id !== id));
 		} catch (error) {
 			console.error('Failed to save transactions:', error);
+			// 保存失败时，清除保存状态，允许重试
+			setRecognitionResults((prev) =>
+				prev.map((r) => (r.id === id ? { ...r, saving: false } : r))
+			);
 			alert('保存失败：' + (error instanceof Error ? error.message : '未知错误'));
 		}
 	};

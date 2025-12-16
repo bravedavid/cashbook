@@ -15,7 +15,6 @@ export default function Home() {
 	const router = useRouter();
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [showForm, setShowForm] = useState(false);
-	const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 	const [user, setUser] = useState<{ id: string; username: string } | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [filters, setFilters] = useState<FilterOptions>({
@@ -106,7 +105,6 @@ export default function Home() {
 			if (data.success) {
 				// 重新加载交易记录
 				await loadTransactions();
-				setEditingTransaction(null);
 			} else {
 				alert('更新失败：' + (data.error || '未知错误'));
 			}
@@ -114,15 +112,6 @@ export default function Home() {
 			console.error('Failed to update transaction:', error);
 			alert('更新失败，请稍后重试');
 		}
-	};
-
-	const handleEditTransaction = (transaction: Transaction) => {
-		setEditingTransaction(transaction);
-		setShowForm(false);
-	};
-
-	const handleCancelEdit = () => {
-		setEditingTransaction(null);
 	};
 
 	const handleDeleteTransaction = async (id: string) => {
@@ -271,26 +260,10 @@ export default function Home() {
 					<StatsCard title="余额" amount={balance} type="balance" />
 				</div>
 
-				{/* 添加/编辑记录表单 */}
+				{/* 添加记录表单 */}
 				{showForm ? (
 					<div className="mb-8">
 						<TransactionForm onSubmit={handleAddTransaction} onCancel={() => setShowForm(false)} />
-					</div>
-				) : editingTransaction ? (
-					<div className="mb-8">
-						<TransactionForm
-							mode="edit"
-							initialData={{
-								type: editingTransaction.type,
-								amount: editingTransaction.amount.toString(),
-								category: editingTransaction.category,
-								description: editingTransaction.description,
-								note: editingTransaction.note,
-								date: editingTransaction.date,
-							}}
-							onSubmit={(formData) => handleUpdateTransaction(editingTransaction.id, formData)}
-							onCancel={handleCancelEdit}
-						/>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -325,7 +298,7 @@ export default function Home() {
 							)}
 						</h2>
 					</div>
-					<TransactionList transactions={filteredTransactions} onDelete={handleDeleteTransaction} onEdit={handleEditTransaction} />
+					<TransactionList transactions={filteredTransactions} onDelete={handleDeleteTransaction} onUpdate={handleUpdateTransaction} />
 				</div>
 			</div>
 		</div>
