@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
 			amount: parseFloat(formData.amount),
 			category: formData.category,
 			description: formData.description,
+			note: formData.note,
 			date: formData.date,
 		});
 

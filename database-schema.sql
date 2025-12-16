@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount REAL NOT NULL,
     category TEXT NOT NULL,
     description TEXT,
+    note TEXT,
     date TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

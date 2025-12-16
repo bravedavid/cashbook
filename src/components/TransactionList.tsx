@@ -57,6 +57,11 @@ export default function TransactionList({ transactions, onDelete, onEdit }: Tran
 								{transaction.description && (
 									<p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">{transaction.description}</p>
 								)}
+								{transaction.note && (
+									<p className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic truncate" title={transaction.note}>
+										备注: {transaction.note}
+									</p>
+								)}
 								<p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatDate(transaction.date)}</p>
 							</div>
 						</div>

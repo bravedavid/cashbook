@@ -119,6 +119,11 @@ export default function RecognitionItem({ result, onRetry, onConfirm, onRemove }
 											<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
 												{transaction.description}
 											</p>
+											{transaction.originalInfo && (
+												<p className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic" title={transaction.originalInfo}>
+													原始信息: {transaction.originalInfo}
+												</p>
+											)}
 											<p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
 												{formatDate(transaction.date)}
 											</p>

@@ -137,6 +137,7 @@ export default function ImportPage() {
 						amount: transaction.amount.toString(),
 						category: transaction.category,
 						description: transaction.description,
+						note: transaction.originalInfo || '', // 将原始交易信息保存到备注字段
 						date: transaction.date,
 					}),
 				});

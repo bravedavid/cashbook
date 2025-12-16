@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
 3. 交易类型（income 表示收入，expense 表示支出）
 4. 交易类别（从以下类别中选择最匹配的：food-餐饮, transport-交通, shopping-购物, entertainment-娱乐, bills-账单, health-医疗, education-教育, salary-工资, bonus-奖金, investment-投资, gift-礼物, other-income-其他收入, other-expense-其他支出）
 5. 交易描述（简要描述交易内容）
+6. 原始交易信息（originalInfo）：从图片中提取的原始交易文本信息，包括商户名称、交易对手、备注等完整信息，用于后续参考
 
 请以 JSON 数组格式返回，格式如下：
 [
@@ -69,14 +70,16 @@ export async function POST(request: NextRequest) {
     "amount": 50.00,
     "type": "expense",
     "category": "food",
-    "description": "午餐"
+    "description": "午餐",
+    "originalInfo": "2024-01-15 12:30 支付宝-XX餐厅 消费 ¥50.00 余额: ¥1,234.56"
   },
   {
     "date": "2024-01-15",
     "amount": 2000.00,
     "type": "income",
     "category": "salary",
-    "description": "工资"
+    "description": "工资",
+    "originalInfo": "2024-01-15 09:00 工资发放 转入 ¥2,000.00 余额: ¥3,234.56"
   }
 ]
 
@@ -149,6 +152,7 @@ export async function POST(request: NextRequest) {
 					type: t.type,
 					category: t.category,
 					description: t.description || '',
+					originalInfo: t.originalInfo || '',
 				}));
 		} catch (parseError) {
 			console.error('JSON 解析错误:', parseError);

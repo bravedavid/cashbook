@@ -7,7 +7,7 @@ import { getD1Database } from './db';
 export async function getTransactions(userId: string): Promise<Transaction[]> {
 	const db = getD1Database();
 	const result = await db
-		.prepare('SELECT id, type, amount, category, description, date, created_at as createdAt FROM transactions WHERE user_id = ? ORDER BY date DESC, created_at DESC')
+		.prepare('SELECT id, type, amount, category, description, note, date, created_at as createdAt FROM transactions WHERE user_id = ? ORDER BY date DESC, created_at DESC')
 		.bind(userId)
 		.all<Transaction>();
 
@@ -27,9 +27,9 @@ export async function addTransaction(
 
 	await db
 		.prepare(
-			'INSERT INTO transactions (id, user_id, type, amount, category, description, date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+			'INSERT INTO transactions (id, user_id, type, amount, category, description, note, date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
 		)
-		.bind(id, userId, transaction.type, transaction.amount, transaction.category, transaction.description || '', transaction.date, createdAt)
+		.bind(id, userId, transaction.type, transaction.amount, transaction.category, transaction.description || '', transaction.note || null, transaction.date, createdAt)
 		.run();
 
 	return {
@@ -77,6 +77,10 @@ export async function updateTransaction(
 	if (updates.description !== undefined) {
 		fields.push('description = ?');
 		values.push(updates.description);
+	}
+	if (updates.note !== undefined) {
+		fields.push('note = ?');
+		values.push(updates.note || null);
 	}
 	if (updates.date !== undefined) {
 		fields.push('date = ?');

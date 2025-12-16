@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Transaction, TransactionFormData, AuthMeResponse, TransactionsResponse, TransactionResponse, DeleteResponse } from '@/types';
 import { calculateTotal, calculateBalance } from '@/lib/utils';
 import TransactionForm from '@/components/TransactionForm';
 import TransactionList from '@/components/TransactionList';
+import TransactionFilter, { FilterOptions } from '@/components/TransactionFilter';
 import StatsCard from '@/components/StatsCard';
 import { BarChart3, Upload, Settings, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
@@ -17,6 +18,14 @@ export default function Home() {
 	const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 	const [user, setUser] = useState<{ id: string; username: string } | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [filters, setFilters] = useState<FilterOptions>({
+		type: 'all',
+		category: '',
+		minAmount: '',
+		maxAmount: '',
+		startDate: '',
+		endDate: '',
+	});
 
 	useEffect(() => {
 		loadUser();
@@ -88,6 +97,7 @@ export default function Home() {
 					amount: parseFloat(formData.amount),
 					category: formData.category,
 					description: formData.description,
+					note: formData.note,
 					date: formData.date,
 				}),
 			});
@@ -147,6 +157,65 @@ export default function Home() {
 		}
 	};
 
+	const handleFilterChange = (newFilters: FilterOptions) => {
+		setFilters(newFilters);
+	};
+
+	const handleFilterReset = () => {
+		setFilters({
+			type: 'all',
+			category: '',
+			minAmount: '',
+			maxAmount: '',
+			startDate: '',
+			endDate: '',
+		});
+	};
+
+	// 筛选交易记录 - 必须在所有条件返回之前调用
+	const filteredTransactions = useMemo(() => {
+		let result = [...transactions];
+
+		// 类型筛选
+		if (filters.type !== 'all') {
+			result = result.filter((t) => t.type === filters.type);
+		}
+
+		// 分类筛选
+		if (filters.category) {
+			result = result.filter((t) => t.category === filters.category);
+		}
+
+		// 金额筛选
+		if (filters.minAmount) {
+			const minAmount = parseFloat(filters.minAmount);
+			if (!isNaN(minAmount)) {
+				result = result.filter((t) => t.amount >= minAmount);
+			}
+		}
+		if (filters.maxAmount) {
+			const maxAmount = parseFloat(filters.maxAmount);
+			if (!isNaN(maxAmount)) {
+				result = result.filter((t) => t.amount <= maxAmount);
+			}
+		}
+
+		// 日期筛选
+		if (filters.startDate) {
+			result = result.filter((t) => t.date >= filters.startDate);
+		}
+		if (filters.endDate) {
+			result = result.filter((t) => t.date <= filters.endDate);
+		}
+
+		// 按日期排序
+		return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+	}, [transactions, filters]);
+
+	const income = calculateTotal(filteredTransactions, 'income');
+	const expense = calculateTotal(filteredTransactions, 'expense');
+	const balance = calculateBalance(filteredTransactions);
+
 	if (loading) {
 		return (
 			<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -154,12 +223,6 @@ export default function Home() {
 			</div>
 		);
 	}
-
-	const income = calculateTotal(transactions, 'income');
-	const expense = calculateTotal(transactions, 'expense');
-	const balance = calculateBalance(transactions);
-
-	const recentTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -222,6 +285,7 @@ export default function Home() {
 								amount: editingTransaction.amount.toString(),
 								category: editingTransaction.category,
 								description: editingTransaction.description,
+								note: editingTransaction.note,
 								date: editingTransaction.date,
 							}}
 							onSubmit={(formData) => handleUpdateTransaction(editingTransaction.id, formData)}
@@ -246,10 +310,22 @@ export default function Home() {
 					</div>
 				)}
 
+				{/* 筛选器 */}
+				<TransactionFilter onFilterChange={handleFilterChange} onReset={handleFilterReset} />
+
 				{/* 交易列表 */}
 				<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-					<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">最近记录</h2>
-					<TransactionList transactions={recentTransactions} onDelete={handleDeleteTransaction} onEdit={handleEditTransaction} />
+					<div className="flex items-center justify-between mb-4">
+						<h2 className="text-xl font-bold text-gray-900 dark:text-white">
+							交易记录
+							{filteredTransactions.length !== transactions.length && (
+								<span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+									({filteredTransactions.length} / {transactions.length})
+								</span>
+							)}
+						</h2>
+					</div>
+					<TransactionList transactions={filteredTransactions} onDelete={handleDeleteTransaction} onEdit={handleEditTransaction} />
 				</div>
 			</div>
 		</div>

@@ -13,6 +13,7 @@ export interface Transaction {
 	amount: number;
 	category: string;
 	description: string;
+	note?: string;
 	date: string;
 	createdAt: string;
 }
@@ -22,6 +23,7 @@ export interface TransactionFormData {
 	amount: string;
 	category: string;
 	description: string;
+	note?: string;
 	date: string;
 }
 
@@ -40,6 +42,7 @@ export interface TransactionItem {
 	type: 'income' | 'expense';
 	category: string;
 	description: string;
+	originalInfo?: string; // 原始交易信息，从银行流水识别出来的原始文本
 }
 
 export interface RecognitionResponse {

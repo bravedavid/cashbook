@@ -18,6 +18,7 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 			amount: '',
 			category: '',
 			description: '',
+			note: '',
 			date: new Date().toISOString().split('T')[0],
 		}
 	);
@@ -33,6 +34,7 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 			amount: '',
 			category: '',
 			description: '',
+			note: '',
 			date: new Date().toISOString().split('T')[0],
 		});
 	};
@@ -131,7 +133,19 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 						value={formData.description}
 						onChange={(e) => setFormData({ ...formData, description: e.target.value })}
 						className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-						placeholder="备注信息（可选）"
+						placeholder="简要描述（可选）"
+					/>
+				</div>
+
+				{/* 备注 */}
+				<div>
+					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">备注</label>
+					<textarea
+						value={formData.note || ''}
+						onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+						className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+						placeholder="原始交易信息、详细备注等（可选）"
+						rows={3}
 					/>
 				</div>
 
