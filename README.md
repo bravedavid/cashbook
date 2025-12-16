@@ -1,6 +1,35 @@
-# OpenNext Starter
+# 记账本 (Cashbook)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+一个现代化的记账应用，支持手动添加记录和 AI 识别银行流水图片。
+
+## 功能特性
+
+- 📝 手动添加收入/支出记录
+- 📸 AI 识别银行流水图片（使用 OpenRouter 大模型）
+- 📊 多种统计图表（折线图、饼图、柱状图）
+- 🎨 现代化的 UI 设计，支持深色模式
+- 💾 本地数据存储（localStorage）
+- ☁️ 支持 Cloudflare 部署
+
+## 环境配置
+
+### 本地开发
+
+1. 复制环境变量示例文件：
+```bash
+cp .env.example .env.local
+```
+
+2. 配置 OpenRouter API Key：
+   - 访问 [OpenRouter](https://openrouter.ai/keys) 获取 API Key
+   - 在 `.env.local` 文件中设置 `OPENROUTER_API_KEY`
+
+### Cloudflare 部署
+
+使用 Wrangler 设置环境变量：
+```bash
+wrangler secret put OPENROUTER_API_KEY
+```
 
 ## Getting Started
 
