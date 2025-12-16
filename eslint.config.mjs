@@ -9,6 +9,22 @@ const compat = new FlatCompat({
 	baseDirectory: __dirname,
 });
 
-const eslintConfig = [...compat.extends("next/core-web-vitals", "next/typescript")];
+const eslintConfig = [
+	...compat.extends("next/core-web-vitals", "next/typescript"),
+	{
+		rules: {
+			// 启用更严格的规则，与构建时保持一致
+			"@typescript-eslint/no-explicit-any": "error",
+			"@typescript-eslint/no-unused-vars": [
+				"warn",
+				{
+					argsIgnorePattern: "^_",
+					varsIgnorePattern: "^_",
+				},
+			],
+			"@next/next/no-img-element": "warn",
+		},
+	},
+];
 
 export default eslintConfig;

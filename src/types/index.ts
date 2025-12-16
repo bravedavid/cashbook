@@ -42,6 +42,12 @@ export interface TransactionItem {
 	description: string;
 }
 
+export interface RecognitionResponse {
+	success: boolean;
+	transactions?: TransactionItem[];
+	error?: string;
+}
+
 export const INCOME_CATEGORIES: Category[] = [
 	{ id: 'salary', name: '工资', icon: '💼', color: '#10b981' },
 	{ id: 'bonus', name: '奖金', icon: '🎁', color: '#3b82f6' },

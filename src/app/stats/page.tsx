@@ -25,6 +25,21 @@ import Link from 'next/link';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#6b7280'];
 
+// 格式化货币的辅助函数，处理 undefined 值
+const formatCurrencyValue = (value: number | undefined): string => {
+	if (value === undefined || value === null || isNaN(value)) {
+		return formatCurrency(0);
+	}
+	return formatCurrency(value);
+};
+
+// 格式化饼图标签的辅助函数，处理 undefined 值
+const formatPieLabel = (props: { name?: string; percent?: number }): string => {
+	const nameValue = props.name ?? '';
+	const percentValue = props.percent ?? 0;
+	return `${nameValue} ${(percentValue * 100).toFixed(0)}%`;
+};
+
 export default function StatsPage() {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [timeRange, setTimeRange] = useState<'all' | 'month' | 'year'>('all');
@@ -163,7 +178,7 @@ export default function StatsPage() {
 											border: '1px solid #e5e7eb',
 											borderRadius: '8px',
 										}}
-										formatter={(value: number) => formatCurrency(value)}
+										formatter={formatCurrencyValue}
 									/>
 									<Legend />
 									<Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} name="收入" />
@@ -184,7 +199,7 @@ export default function StatsPage() {
 										cx="50%"
 										cy="50%"
 										labelLine={false}
-										label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+										label={formatPieLabel}
 										outerRadius={100}
 										fill="#8884d8"
 										dataKey="value"
@@ -193,7 +208,7 @@ export default function StatsPage() {
 											<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
 										))}
 									</Pie>
-									<Tooltip formatter={(value: number) => formatCurrency(value)} />
+									<Tooltip formatter={formatCurrencyValue} />
 								</PieChart>
 							</ResponsiveContainer>
 						</div>
@@ -210,7 +225,7 @@ export default function StatsPage() {
 										cx="50%"
 										cy="50%"
 										labelLine={false}
-										label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+										label={formatPieLabel}
 										outerRadius={100}
 										fill="#8884d8"
 										dataKey="value"
@@ -219,7 +234,7 @@ export default function StatsPage() {
 											<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
 										))}
 									</Pie>
-									<Tooltip formatter={(value: number) => formatCurrency(value)} />
+									<Tooltip formatter={formatCurrencyValue} />
 								</PieChart>
 							</ResponsiveContainer>
 						</div>
@@ -240,7 +255,7 @@ export default function StatsPage() {
 											border: '1px solid #e5e7eb',
 											borderRadius: '8px',
 										}}
-										formatter={(value: number) => formatCurrency(value)}
+										formatter={formatCurrencyValue}
 									/>
 									<Bar dataKey="value" fill="#ef4444" radius={[8, 8, 0, 0]} />
 								</BarChart>
@@ -263,7 +278,7 @@ export default function StatsPage() {
 											border: '1px solid #e5e7eb',
 											borderRadius: '8px',
 										}}
-										formatter={(value: number) => formatCurrency(value)}
+										formatter={formatCurrencyValue}
 									/>
 									<Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
 								</BarChart>

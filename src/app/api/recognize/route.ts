@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { TransactionItem, RecognitionResponse } from '@/types';
 
 interface RecognitionRequest {
 	imageBase64: string;
@@ -6,18 +7,12 @@ interface RecognitionRequest {
 	model?: string;
 }
 
-interface TransactionItem {
-	date: string; // YYYY-MM-DD
-	amount: number;
-	type: 'income' | 'expense';
-	category: string;
-	description: string;
-}
-
-interface RecognitionResponse {
-	success: boolean;
-	transactions?: TransactionItem[];
-	error?: string;
+interface OpenRouterResponse {
+	choices?: Array<{
+		message?: {
+			content?: string;
+		};
+	}>;
 }
 
 export async function POST(request: NextRequest) {
@@ -109,7 +104,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const openRouterData = await openRouterResponse.json();
+		const openRouterData = (await openRouterResponse.json()) as OpenRouterResponse;
 		const content = openRouterData.choices?.[0]?.message?.content;
 
 		if (!content) {

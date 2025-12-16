@@ -33,11 +33,11 @@ export const settings = {
 		}
 	},
 
-	saveSettings: (settings: Partial<AppSettings>): void => {
+	saveSettings: (newSettings: Partial<AppSettings>): void => {
 		if (typeof window === 'undefined') return;
 		try {
 			const current = settings.getSettings();
-			const updated = { ...current, ...settings };
+			const updated = { ...current, ...newSettings };
 			localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
 		} catch (error) {
 			console.error('Failed to save settings:', error);

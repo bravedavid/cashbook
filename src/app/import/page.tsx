@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RecognitionResult, TransactionItem } from '@/types';
+import { RecognitionResult, TransactionItem, RecognitionResponse } from '@/types';
 import { storage } from '@/lib/storage';
 import { fileToBase64 } from '@/lib/imageUtils';
 import { settings } from '@/lib/settings';
@@ -49,7 +49,7 @@ export default function ImportPage() {
 				}),
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as RecognitionResponse;
 
 			if (data.success && data.transactions) {
 				setRecognitionResults((prev) =>
