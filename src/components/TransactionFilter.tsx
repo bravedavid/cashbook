@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { TransactionType, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
+import { useState, useEffect } from 'react';
+import { TransactionType, Category, CategoriesResponse } from '@/types';
 import { Filter, X } from 'lucide-react';
 
 export interface FilterOptions {
@@ -28,6 +28,26 @@ export default function TransactionFilter({ onFilterChange, onReset }: Transacti
 		startDate: '',
 		endDate: '',
 	});
+	const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
+	const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
+
+	useEffect(() => {
+		const loadCategories = async () => {
+			try {
+				const [incomeRes, expenseRes] = await Promise.all([
+					fetch('/api/categories?type=income'),
+					fetch('/api/categories?type=expense'),
+				]);
+			const incomeData = (await incomeRes.json()) as CategoriesResponse;
+			const expenseData = (await expenseRes.json()) as CategoriesResponse;
+			if (incomeData.success) setIncomeCategories(incomeData.categories || []);
+			if (expenseData.success) setExpenseCategories(expenseData.categories || []);
+			} catch (error) {
+				console.error('Failed to load categories:', error);
+			}
+		};
+		loadCategories();
+	}, []);
 
 	const hasActiveFilters = filters.type !== 'all' || filters.category !== '' || filters.minAmount !== '' || filters.maxAmount !== '' || filters.startDate !== '' || filters.endDate !== '';
 
@@ -101,12 +121,12 @@ export default function TransactionFilter({ onFilterChange, onReset }: Transacti
 							className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						>
 							<option value="">全部</option>
-							{(filters.type === 'all' || filters.type === 'income' ? INCOME_CATEGORIES : []).map((cat) => (
+							{(filters.type === 'all' || filters.type === 'income' ? incomeCategories : []).map((cat) => (
 								<option key={cat.id} value={cat.id}>
 									{cat.icon} {cat.name}
 								</option>
 							))}
-							{(filters.type === 'all' || filters.type === 'expense' ? EXPENSE_CATEGORIES : []).map((cat) => (
+							{(filters.type === 'all' || filters.type === 'expense' ? expenseCategories : []).map((cat) => (
 								<option key={cat.id} value={cat.id}>
 									{cat.icon} {cat.name}
 								</option>

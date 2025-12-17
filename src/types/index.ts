@@ -81,6 +81,18 @@ export interface LoginResponse {
 	user?: { id: string; username: string };
 }
 
+export interface CategoriesResponse {
+	success: boolean;
+	categories?: Category[];
+	error?: string;
+}
+
+export interface CategoryResponse {
+	success: boolean;
+	category?: Category;
+	error?: string;
+}
+
 export const INCOME_CATEGORIES: Category[] = [
 	{ id: 'salary', name: '工资', icon: '💼', color: '#10b981' },
 	{ id: 'bonus', name: '奖金', icon: '🎁', color: '#3b82f6' },

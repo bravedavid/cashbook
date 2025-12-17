@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TransactionItem, RecognitionResponse } from '@/types';
+import { getCurrentUser } from '@/lib/auth';
+import { getUserCategories } from '@/lib/categories';
 
 interface RecognitionRequest {
 	imageBase64: string;
@@ -25,6 +27,29 @@ export async function POST(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
+
+		// 获取当前用户
+		const user = await getCurrentUser();
+		if (!user) {
+			return NextResponse.json(
+				{ success: false, error: '未登录' },
+				{ status: 401 }
+			);
+		}
+
+		// 获取用户的所有分类
+		const [incomeCategories, expenseCategories] = await Promise.all([
+			getUserCategories(user.id, 'income'),
+			getUserCategories(user.id, 'expense'),
+		]);
+
+		// 格式化分类信息用于 prompt
+		const formatCategories = (categories: typeof incomeCategories, type: 'income' | 'expense') => {
+			return categories.map(cat => `${cat.id}-${cat.name}`).join(', ');
+		};
+
+		const incomeCategoriesText = formatCategories(incomeCategories, 'income');
+		const expenseCategoriesText = formatCategories(expenseCategories, 'expense');
 
 		// 获取 OpenRouter API Key（优先使用客户端提供的，否则使用环境变量）
 		const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY;
@@ -59,7 +84,10 @@ export async function POST(request: NextRequest) {
 1. 交易日期（格式：YYYY-MM-DD）
 2. 交易金额（数字）
 3. 交易类型（income 表示收入，expense 表示支出）
-4. 交易类别（从以下类别中选择最匹配的：food-餐饮, transport-交通, shopping-购物, entertainment-娱乐, bills-账单, health-医疗, education-教育, salary-工资, bonus-奖金, investment-投资, gift-礼物, other-income-其他收入, other-expense-其他支出）
+4. 交易类别（必须从以下类别中选择最匹配的）：
+   - 收入类别：${incomeCategoriesText || 'salary-工资, bonus-奖金, investment-投资, gift-礼物, other-income-其他收入'}
+   - 支出类别：${expenseCategoriesText || 'food-餐饮, transport-交通, shopping-购物, entertainment-娱乐, bills-账单, health-医疗, education-教育, other-expense-其他支出'}
+   请根据交易内容选择最合适的分类ID（例如：food、salary、custom-xxx等）
 5. 交易描述（简要描述交易内容）
 6. 原始交易信息（originalInfo）：从图片中提取的原始交易文本信息，包括商户名称、交易对手、备注等完整信息，用于后续参考
 
@@ -83,7 +111,11 @@ export async function POST(request: NextRequest) {
   }
 ]
 
-如果图片中没有交易记录或无法识别，返回空数组 []。只返回 JSON 数组，不要包含其他文字说明。`,
+重要提示：
+- 分类ID必须完全匹配上述提供的分类列表中的ID
+- 如果是自定义分类，使用完整的ID（如 custom-xxx）
+- 如果图片中没有交易记录或无法识别，返回空数组 []
+- 只返回 JSON 数组，不要包含其他文字说明`,
 							},
 							{
 								type: 'image_url',

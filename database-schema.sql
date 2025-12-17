@@ -47,6 +47,22 @@ CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
 
+-- 4. 自定义分类表
+CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+    name TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    color TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(user_id, type);
+
 -- 示例：插入测试用户（密码：admin123，实际使用时请使用 bcrypt 等加密）
 -- 注意：这里只是示例，实际密码应该使用 bcrypt 加密
 -- INSERT INTO users (id, username, password_hash) VALUES 

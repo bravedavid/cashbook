@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Transaction, TransactionsResponse } from '@/types';
+import { Transaction, TransactionsResponse, Category, CategoriesResponse } from '@/types';
 import { calculateTotal, groupByCategory, groupByDate, formatCurrency } from '@/lib/utils';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
 import {
 	BarChart,
 	Bar,
@@ -42,10 +41,30 @@ const formatPieLabel = (props: { name?: string; percent?: number }): string => {
 export default function StatsPage() {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [timeRange, setTimeRange] = useState<'all' | 'month' | 'year'>('all');
+	const [allCategories, setAllCategories] = useState<Category[]>([]);
 
 	useEffect(() => {
 		loadTransactions();
+		loadCategories();
 	}, []);
+
+	const loadCategories = async () => {
+		try {
+			const [incomeRes, expenseRes] = await Promise.all([
+				fetch('/api/categories?type=income'),
+				fetch('/api/categories?type=expense'),
+			]);
+			const incomeData = (await incomeRes.json()) as CategoriesResponse;
+			const expenseData = (await expenseRes.json()) as CategoriesResponse;
+			const categories = [
+				...(incomeData.success ? incomeData.categories || [] : []),
+				...(expenseData.success ? expenseData.categories || [] : []),
+			];
+			setAllCategories(categories);
+		} catch (error) {
+			console.error('Failed to load categories:', error);
+		}
+	};
 
 	const loadTransactions = async () => {
 		try {
@@ -81,7 +100,6 @@ export default function StatsPage() {
 	const expenseByCategory = groupByCategory(filteredTransactions, 'expense');
 	const dailyData = groupByDate(filteredTransactions);
 
-	const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
 	const getCategoryName = (id: string) => allCategories.find((c) => c.id === id)?.name || id;
 
 	const incomeChartData = incomeByCategory.map((item) => ({

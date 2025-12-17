@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { settings, AppSettings, AVAILABLE_MODELS } from '@/lib/settings';
 import { ArrowLeft, Save, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import CategoryManager from '@/components/CategoryManager';
+import { Category, CategoriesResponse, CategoryResponse, DeleteResponse } from '@/types';
 
 export default function SettingsPage() {
 	const [formData, setFormData] = useState<AppSettings>({
@@ -12,11 +14,55 @@ export default function SettingsPage() {
 	});
 	const [showApiKey, setShowApiKey] = useState(false);
 	const [saved, setSaved] = useState(false);
+	const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
+	const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
 
 	useEffect(() => {
 		const currentSettings = settings.getSettings();
 		setFormData(currentSettings);
+		loadCategories();
 	}, []);
+
+	const loadCategories = async () => {
+		try {
+			const [incomeRes, expenseRes] = await Promise.all([
+				fetch('/api/categories?type=income'),
+				fetch('/api/categories?type=expense'),
+			]);
+			const incomeData = (await incomeRes.json()) as CategoriesResponse;
+			const expenseData = (await expenseRes.json()) as CategoriesResponse;
+			if (incomeData.success) setIncomeCategories(incomeData.categories || []);
+			if (expenseData.success) setExpenseCategories(expenseData.categories || []);
+		} catch (error) {
+			console.error('Failed to load categories:', error);
+		}
+	};
+
+	const handleAddCategory = async (category: Omit<Category, 'id'> & { type: 'income' | 'expense' }) => {
+		const response = await fetch('/api/categories', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(category),
+		});
+		const data = (await response.json()) as CategoryResponse;
+		if (data.success) {
+			await loadCategories();
+		} else {
+			throw new Error(data.error || '添加失败');
+		}
+	};
+
+	const handleDeleteCategory = async (categoryId: string) => {
+		const response = await fetch(`/api/categories/${categoryId}`, {
+			method: 'DELETE',
+		});
+		const data = (await response.json()) as DeleteResponse;
+		if (data.success) {
+			await loadCategories();
+		} else {
+			throw new Error(data.error || '删除失败');
+		}
+	};
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -161,6 +207,24 @@ export default function SettingsPage() {
 						</div>
 					)}
 				</form>
+
+				{/* 分类管理 */}
+				<div className="mt-8 space-y-6">
+					<CategoryManager
+						categories={incomeCategories}
+						type="income"
+						onAdd={handleAddCategory}
+						onDelete={handleDeleteCategory}
+						onUpdate={loadCategories}
+					/>
+					<CategoryManager
+						categories={expenseCategories}
+						type="expense"
+						onAdd={handleAddCategory}
+						onDelete={handleDeleteCategory}
+						onUpdate={loadCategories}
+					/>
+				</div>
 
 				{/* 使用说明 */}
 				<div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">

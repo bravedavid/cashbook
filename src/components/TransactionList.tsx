@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Transaction, TransactionFormData, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
+import { useState, useEffect } from 'react';
+import { Transaction, TransactionFormData, Category, CategoriesResponse } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Trash2, Edit2, Check, X } from 'lucide-react';
 
@@ -14,7 +14,28 @@ interface TransactionListProps {
 export default function TransactionList({ transactions, onDelete, onUpdate }: TransactionListProps) {
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editData, setEditData] = useState<TransactionFormData | null>(null);
-	const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+	const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
+	const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
+
+	useEffect(() => {
+		const loadCategories = async () => {
+			try {
+				const [incomeRes, expenseRes] = await Promise.all([
+					fetch('/api/categories?type=income'),
+					fetch('/api/categories?type=expense'),
+				]);
+			const incomeData = (await incomeRes.json()) as CategoriesResponse;
+			const expenseData = (await expenseRes.json()) as CategoriesResponse;
+			if (incomeData.success) setIncomeCategories(incomeData.categories || []);
+			if (expenseData.success) setExpenseCategories(expenseData.categories || []);
+			} catch (error) {
+				console.error('Failed to load categories:', error);
+			}
+		};
+		loadCategories();
+	}, []);
+
+	const allCategories = [...incomeCategories, ...expenseCategories];
 	const getCategory = (id: string) => allCategories.find((c) => c.id === id);
 
 	const handleStartEdit = (transaction: Transaction) => {
@@ -57,7 +78,7 @@ export default function TransactionList({ transactions, onDelete, onUpdate }: Tr
 				const isIncome = transaction.type === 'income';
 				const isEditing = editingId === transaction.id;
 				const currentData = isEditing && editData ? editData : null;
-				const categories = currentData?.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+				const categories = currentData?.type === 'income' ? incomeCategories : expenseCategories;
 
 				return (
 					<div

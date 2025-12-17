@@ -1,8 +1,8 @@
 'use client';
 
-import { RecognitionResult, TransactionItem } from '@/types';
+import { useState, useEffect } from 'react';
+import { RecognitionResult, TransactionItem, Category, CategoriesResponse } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
 import { CheckCircle2, XCircle, Loader2, RefreshCw, Trash2 } from 'lucide-react';
 
 interface RecognitionItemProps {
@@ -13,7 +13,29 @@ interface RecognitionItemProps {
 }
 
 export default function RecognitionItem({ result, onRetry, onConfirm, onRemove }: RecognitionItemProps) {
-	const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+	const [allCategories, setAllCategories] = useState<Category[]>([]);
+
+	useEffect(() => {
+		const loadCategories = async () => {
+			try {
+				const [incomeRes, expenseRes] = await Promise.all([
+					fetch('/api/categories?type=income'),
+					fetch('/api/categories?type=expense'),
+				]);
+			const incomeData = (await incomeRes.json()) as CategoriesResponse;
+			const expenseData = (await expenseRes.json()) as CategoriesResponse;
+			const categories = [
+				...(incomeData.success ? incomeData.categories || [] : []),
+				...(expenseData.success ? expenseData.categories || [] : []),
+			];
+				setAllCategories(categories);
+			} catch (error) {
+				console.error('Failed to load categories:', error);
+			}
+		};
+		loadCategories();
+	}, []);
+
 	const getCategory = (id: string) => allCategories.find((c) => c.id === id);
 
 	const renderStatus = () => {

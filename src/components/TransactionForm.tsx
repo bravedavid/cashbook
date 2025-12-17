@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { TransactionFormData, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types';
+import { useState, useEffect } from 'react';
+import { TransactionFormData, Category, CategoriesResponse } from '@/types';
 import { Plus, X } from 'lucide-react';
 
 interface TransactionFormProps {
@@ -22,8 +22,28 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 			date: new Date().toISOString().split('T')[0],
 		}
 	);
+	const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
+	const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
 
-	const categories = formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+	useEffect(() => {
+		const loadCategories = async () => {
+			try {
+				const [incomeRes, expenseRes] = await Promise.all([
+					fetch('/api/categories?type=income'),
+					fetch('/api/categories?type=expense'),
+				]);
+			const incomeData = (await incomeRes.json()) as CategoriesResponse;
+			const expenseData = (await expenseRes.json()) as CategoriesResponse;
+			if (incomeData.success) setIncomeCategories(incomeData.categories || []);
+			if (expenseData.success) setExpenseCategories(expenseData.categories || []);
+			} catch (error) {
+				console.error('Failed to load categories:', error);
+			}
+		};
+		loadCategories();
+	}, []);
+
+	const categories = formData.type === 'income' ? incomeCategories : expenseCategories;
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
