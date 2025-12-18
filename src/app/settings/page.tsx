@@ -239,6 +239,7 @@ export default function SettingsPage() {
 								<li>• GPT-4o：准确度最高，适合重要场景</li>
 								<li>• GPT-4o Mini：速度快，成本低，适合日常使用</li>
 								<li>• Claude 3.5 Sonnet：平衡性能和成本</li>
+								<li>• Gemini 3 Flash Preview：最新的高速模型，速度与成本优化</li>
 							</ul>
 						</li>
 						<li>

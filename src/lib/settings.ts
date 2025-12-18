@@ -17,6 +17,7 @@ export const AVAILABLE_MODELS = [
 	{ id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', description: 'Anthropic 的最强模型' },
 	{ id: 'google/gemini-pro-vision', name: 'Gemini Pro Vision', description: 'Google 的视觉模型' },
 	{ id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', description: 'Google Gemini 2.0 Flash 模型，速度快且成本低' },
+	{ id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', description: 'Google Gemini 3 Flash 预览版，最新的高速模型' },
 ];
 
 export const settings = {
