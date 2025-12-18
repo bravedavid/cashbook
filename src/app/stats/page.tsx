@@ -38,9 +38,13 @@ const formatPieLabel = (props: { name?: string; percent?: number }): string => {
 	return `${nameValue} ${(percentValue * 100).toFixed(0)}%`;
 };
 
+type TimeRangeType = 'all' | 'month' | 'year' | 'custom';
+
 export default function StatsPage() {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
-	const [timeRange, setTimeRange] = useState<'all' | 'month' | 'year'>('all');
+	const [timeRange, setTimeRange] = useState<TimeRangeType>('all');
+	const [customStartDate, setCustomStartDate] = useState<string>('');
+	const [customEndDate, setCustomEndDate] = useState<string>('');
 	const [allCategories, setAllCategories] = useState<Category[]>([]);
 
 	useEffect(() => {
@@ -78,19 +82,44 @@ export default function StatsPage() {
 		}
 	};
 
+	const handleTimeRangeChange = (newRange: TimeRangeType) => {
+		setTimeRange(newRange);
+		// 如果切换到非自定义范围，清除自定义日期
+		if (newRange !== 'custom') {
+			setCustomStartDate('');
+			setCustomEndDate('');
+		}
+	};
+
 	const filteredTransactions = useMemo(() => {
 		if (timeRange === 'all') return transactions;
+
 		const now = new Date();
+		let startDate: Date | null = null;
+		let endDate: Date | null = null;
+
 		if (timeRange === 'month') {
-			const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-			return transactions.filter((t) => new Date(t.date) >= startOfMonth);
+			startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+		} else if (timeRange === 'year') {
+			startDate = new Date(now.getFullYear(), 0, 1);
+		} else if (timeRange === 'custom') {
+			if (customStartDate) {
+				startDate = new Date(customStartDate);
+			}
+			if (customEndDate) {
+				endDate = new Date(customEndDate);
+				// 设置结束日期为当天的23:59:59
+				endDate.setHours(23, 59, 59, 999);
+			}
 		}
-		if (timeRange === 'year') {
-			const startOfYear = new Date(now.getFullYear(), 0, 1);
-			return transactions.filter((t) => new Date(t.date) >= startOfYear);
-		}
-		return transactions;
-	}, [transactions, timeRange]);
+
+		return transactions.filter((t) => {
+			const transactionDate = new Date(t.date);
+			if (startDate && transactionDate < startDate) return false;
+			if (endDate && transactionDate > endDate) return false;
+			return true;
+		});
+	}, [transactions, timeRange, customStartDate, customEndDate]);
 
 	const income = calculateTotal(filteredTransactions, 'income');
 	const expense = calculateTotal(filteredTransactions, 'expense');
@@ -100,7 +129,14 @@ export default function StatsPage() {
 	const expenseByCategory = groupByCategory(filteredTransactions, 'expense');
 	const dailyData = groupByDate(filteredTransactions);
 
-	const getCategoryName = (id: string) => allCategories.find((c) => c.id === id)?.name || id;
+	const getCategoryName = (id: string) => {
+		const category = allCategories.find((c) => c.id === id);
+		if (!category) {
+			console.warn('Category not found:', id, 'Available categories:', allCategories.map(c => `${c.id}:${c.name}`));
+			return id; // 如果找不到分类，返回ID
+		}
+		return category.name;
+	};
 
 	const incomeChartData = incomeByCategory.map((item) => ({
 		name: getCategoryName(item.category),
@@ -137,9 +173,9 @@ export default function StatsPage() {
 						>
 							<Settings className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 						</Link>
-						<div className="flex gap-2">
+						<div className="flex gap-2 items-center">
 							<button
-								onClick={() => setTimeRange('all')}
+								onClick={() => handleTimeRangeChange('all')}
 								className={`px-4 py-2 rounded-lg transition-colors ${
 									timeRange === 'all'
 										? 'bg-blue-600 text-white'
@@ -149,7 +185,7 @@ export default function StatsPage() {
 								全部
 							</button>
 							<button
-								onClick={() => setTimeRange('month')}
+								onClick={() => handleTimeRangeChange('month')}
 								className={`px-4 py-2 rounded-lg transition-colors ${
 									timeRange === 'month'
 										? 'bg-blue-600 text-white'
@@ -159,7 +195,7 @@ export default function StatsPage() {
 								本月
 							</button>
 							<button
-								onClick={() => setTimeRange('year')}
+								onClick={() => handleTimeRangeChange('year')}
 								className={`px-4 py-2 rounded-lg transition-colors ${
 									timeRange === 'year'
 										? 'bg-blue-600 text-white'
@@ -168,6 +204,40 @@ export default function StatsPage() {
 							>
 								本年
 							</button>
+							<button
+								onClick={() => handleTimeRangeChange('custom')}
+								className={`px-4 py-2 rounded-lg transition-colors ${
+									timeRange === 'custom'
+										? 'bg-blue-600 text-white'
+										: 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+								}`}
+							>
+								自定义
+							</button>
+
+							{/* 自定义日期选择器 */}
+							{timeRange === 'custom' && (
+								<div className="flex gap-2 items-center ml-4">
+									<div className="flex items-center gap-2">
+										<label className="text-sm text-gray-600 dark:text-gray-400">开始:</label>
+										<input
+											type="date"
+											value={customStartDate}
+											onChange={(e) => setCustomStartDate(e.target.value)}
+											className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										/>
+									</div>
+									<div className="flex items-center gap-2">
+										<label className="text-sm text-gray-600 dark:text-gray-400">结束:</label>
+										<input
+											type="date"
+											value={customEndDate}
+											onChange={(e) => setCustomEndDate(e.target.value)}
+											className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+										/>
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
 				</div>
@@ -218,7 +288,7 @@ export default function StatsPage() {
 					)}
 
 					{/* 收入分类饼图 */}
-					{incomeChartData.length > 0 && (
+					{incomeChartData.length > 0 && allCategories.length > 0 && (
 						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
 							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">收入分类分布</h2>
 							<ResponsiveContainer width="100%" height={300}>
@@ -244,7 +314,7 @@ export default function StatsPage() {
 					)}
 
 					{/* 支出分类饼图 */}
-					{expenseChartData.length > 0 && (
+					{expenseChartData.length > 0 && allCategories.length > 0 && (
 						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
 							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">支出分类分布</h2>
 							<ResponsiveContainer width="100%" height={300}>
@@ -270,7 +340,7 @@ export default function StatsPage() {
 					)}
 
 					{/* 支出分类柱状图 */}
-					{expenseChartData.length > 0 && (
+					{expenseChartData.length > 0 && allCategories.length > 0 && (
 						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
 							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">支出分类对比</h2>
 							<ResponsiveContainer width="100%" height={300}>
@@ -293,7 +363,7 @@ export default function StatsPage() {
 					)}
 
 					{/* 收入分类柱状图 */}
-					{incomeChartData.length > 0 && (
+					{incomeChartData.length > 0 && allCategories.length > 0 && (
 						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
 							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">收入分类对比</h2>
 							<ResponsiveContainer width="100%" height={300}>
