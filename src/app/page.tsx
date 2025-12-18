@@ -8,7 +8,7 @@ import TransactionForm from '@/components/TransactionForm';
 import TransactionList from '@/components/TransactionList';
 import TransactionFilter, { FilterOptions } from '@/components/TransactionFilter';
 import StatsCard from '@/components/StatsCard';
-import { BarChart3, Upload, Settings, LogOut, User } from 'lucide-react';
+import { BarChart3, Upload, Settings, LogOut, User, List, Calendar } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
@@ -25,6 +25,7 @@ export default function Home() {
 		startDate: '',
 		endDate: '',
 	});
+	const [viewMode, setViewMode] = useState<'list' | 'monthly'>('list');
 
 	useEffect(() => {
 		loadUser();
@@ -297,8 +298,38 @@ export default function Home() {
 								</span>
 							)}
 						</h2>
+						{/* 视图切换按钮 */}
+						<div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+							<button
+								onClick={() => setViewMode('list')}
+								className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+									viewMode === 'list'
+										? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+										: 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+								}`}
+							>
+								<List className="w-4 h-4" />
+								列表
+							</button>
+							<button
+								onClick={() => setViewMode('monthly')}
+								className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+									viewMode === 'monthly'
+										? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+										: 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+								}`}
+							>
+								<Calendar className="w-4 h-4" />
+								按月
+							</button>
+						</div>
 					</div>
-					<TransactionList transactions={filteredTransactions} onDelete={handleDeleteTransaction} onUpdate={handleUpdateTransaction} />
+					<TransactionList
+						transactions={filteredTransactions}
+						onDelete={handleDeleteTransaction}
+						onUpdate={handleUpdateTransaction}
+						viewMode={viewMode}
+					/>
 				</div>
 			</div>
 		</div>

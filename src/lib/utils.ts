@@ -75,3 +75,50 @@ export const groupByDate = (transactions: Transaction[]) => {
 		.sort((a, b) => a.date.localeCompare(b.date));
 };
 
+export interface MonthlyGroup {
+	monthKey: string; // '2024-01' format
+	monthName: string; // '2024年1月' format
+	transactions: Transaction[];
+	income: number;
+	expense: number;
+	balance: number;
+	count: number;
+}
+
+export const groupTransactionsByMonth = (transactions: Transaction[]): MonthlyGroup[] => {
+	const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+	const grouped = sortedTransactions.reduce((acc, transaction) => {
+		const date = new Date(transaction.date);
+		const monthKey = format(date, 'yyyy-MM');
+		const monthName = format(date, 'yyyy年M月');
+
+		if (!acc[monthKey]) {
+			acc[monthKey] = {
+				monthKey,
+				monthName,
+				transactions: [],
+				income: 0,
+				expense: 0,
+				balance: 0,
+				count: 0,
+			};
+		}
+
+		acc[monthKey].transactions.push(transaction);
+		acc[monthKey].count += 1;
+
+		if (transaction.type === 'income') {
+			acc[monthKey].income += transaction.amount;
+		} else {
+			acc[monthKey].expense += transaction.amount;
+		}
+
+		acc[monthKey].balance = acc[monthKey].income - acc[monthKey].expense;
+
+		return acc;
+	}, {} as Record<string, MonthlyGroup>);
+
+	return Object.values(grouped).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+};
+
