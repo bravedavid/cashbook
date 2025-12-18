@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Transaction, TransactionFormData, Category, CategoriesResponse } from '@/types';
-import { formatCurrency, formatDate, groupTransactionsByMonth, MonthlyGroup } from '@/lib/utils';
-import { Trash2, Edit2, Check, X, ChevronDown, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatCurrency, formatDate, groupTransactionsByMonth, MonthlyGroup, DailyGroup } from '@/lib/utils';
+import { Trash2, Edit2, Check, X, ChevronDown, ChevronRight, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 
 interface TransactionListProps {
 	transactions: Transaction[];
@@ -287,54 +287,117 @@ export default function TransactionList({ transactions, onDelete, onUpdate, view
 		);
 	};
 
+	// 渲染日分组
+	const renderDailyGroup = (dailyGroup: DailyGroup) => {
+		return (
+			<div key={dailyGroup.date} className="mb-4">
+				{/* 日期标题和当日统计 */}
+				<div className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 mb-3 border border-gray-200 dark:border-gray-600">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-3">
+							<div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+								<Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+							</div>
+							<div>
+								<h4 className="text-lg font-bold text-gray-900 dark:text-white">{dailyGroup.dateDisplay}</h4>
+								<p className="text-sm text-gray-500 dark:text-gray-400">{dailyGroup.count}笔记录</p>
+							</div>
+						</div>
+						<div className="flex items-center gap-4">
+							{dailyGroup.income > 0 && (
+								<div className="text-right">
+									<span className="text-green-600 dark:text-green-400 font-semibold">
+										+{formatCurrency(dailyGroup.income)}
+									</span>
+									<p className="text-xs text-gray-500 dark:text-gray-400">收入</p>
+								</div>
+							)}
+							{dailyGroup.expense > 0 && (
+								<div className="text-right">
+									<span className="text-red-600 dark:text-red-400 font-semibold">
+										-{formatCurrency(dailyGroup.expense)}
+									</span>
+									<p className="text-xs text-gray-500 dark:text-gray-400">支出</p>
+								</div>
+							)}
+							{dailyGroup.balance !== 0 && (
+								<div className="text-right border-l border-gray-200 dark:border-gray-600 pl-4">
+									<span className={`font-bold ${dailyGroup.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+										{dailyGroup.balance >= 0 ? '+' : ''}{formatCurrency(dailyGroup.balance)}
+									</span>
+									<p className="text-xs text-gray-500 dark:text-gray-400">净收支</p>
+								</div>
+							)}
+						</div>
+					</div>
+				</div>
+
+				{/* 当日交易记录列表 */}
+				<div className="space-y-2 ml-4">
+					{dailyGroup.transactions.map(renderTransactionItem)}
+				</div>
+			</div>
+		);
+	};
+
 	// 渲染月分组
 	const renderMonthlyGroup = (group: MonthlyGroup) => {
 		const isExpanded = expandedMonths.has(group.monthKey);
 
 		return (
-			<div key={group.monthKey} className="mb-6">
+			<div key={group.monthKey} className="mb-8">
 				{/* 月标题和统计信息 */}
 				<div
-					className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-lg p-4 mb-3 cursor-pointer hover:shadow-md transition-all"
+					className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-xl p-5 mb-4 cursor-pointer hover:shadow-lg transition-all duration-200 border border-blue-200 dark:border-gray-500"
 					onClick={() => toggleMonthExpanded(group.monthKey)}
 				>
 					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							{isExpanded ? (
-								<ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-							) : (
-								<ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-							)}
-							<h3 className="text-lg font-bold text-gray-900 dark:text-white">{group.monthName}</h3>
-							<span className="text-sm text-gray-500 dark:text-gray-400">({group.count}笔记录)</span>
+						<div className="flex items-center gap-4">
+							<div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+								{isExpanded ? (
+									<ChevronDown className="w-5 h-5 text-white" />
+								) : (
+									<ChevronRight className="w-5 h-5 text-white" />
+								)}
+							</div>
+							<div>
+								<h3 className="text-xl font-bold text-gray-900 dark:text-white">{group.monthName}</h3>
+								<p className="text-sm text-gray-600 dark:text-gray-300">{group.count}笔记录</p>
+							</div>
 						</div>
 						<div className="flex items-center gap-6">
-							<div className="flex items-center gap-2">
-								<TrendingUp className="w-4 h-4 text-green-600" />
-								<span className="text-green-600 dark:text-green-400 font-semibold">
-									+{formatCurrency(group.income)}
-								</span>
+							<div className="text-center">
+								<div className="flex items-center gap-2">
+									<TrendingUp className="w-5 h-5 text-green-600" />
+									<span className="text-green-600 dark:text-green-400 font-bold text-lg">
+										+{formatCurrency(group.income)}
+									</span>
+								</div>
+								<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">收入</p>
 							</div>
-							<div className="flex items-center gap-2">
-								<TrendingDown className="w-4 h-4 text-red-600" />
-								<span className="text-red-600 dark:text-red-400 font-semibold">
-									-{formatCurrency(group.expense)}
-								</span>
+							<div className="text-center">
+								<div className="flex items-center gap-2">
+									<TrendingDown className="w-5 h-5 text-red-600" />
+									<span className="text-red-600 dark:text-red-400 font-bold text-lg">
+										-{formatCurrency(group.expense)}
+									</span>
+								</div>
+								<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">支出</p>
 							</div>
-							<div className="text-right">
-								<span className={`font-bold ${group.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+							<div className="text-center border-l border-gray-200 dark:border-gray-600 pl-6">
+								<span className={`font-bold text-lg ${group.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
 									{group.balance >= 0 ? '+' : ''}{formatCurrency(group.balance)}
 								</span>
-								<p className="text-xs text-gray-500 dark:text-gray-400">余额</p>
+								<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">余额</p>
 							</div>
 						</div>
 					</div>
 				</div>
 
-				{/* 展开的交易记录列表 */}
+				{/* 展开的按天分组交易记录列表 */}
 				{isExpanded && (
-					<div className="space-y-2 ml-8">
-						{group.transactions.map(renderTransactionItem)}
+					<div className="space-y-3 ml-6">
+						{group.dailyGroups.map(renderDailyGroup)}
 					</div>
 				)}
 			</div>

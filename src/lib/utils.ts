@@ -83,6 +83,17 @@ export interface MonthlyGroup {
 	expense: number;
 	balance: number;
 	count: number;
+	dailyGroups: DailyGroup[]; // 新增：按天分组
+}
+
+export interface DailyGroup {
+	date: string; // '2024-12-20' format
+	dateDisplay: string; // '12月20日' format
+	transactions: Transaction[];
+	income: number;
+	expense: number;
+	balance: number;
+	count: number;
 }
 
 export const groupTransactionsByMonth = (transactions: Transaction[]): MonthlyGroup[] => {
@@ -102,6 +113,7 @@ export const groupTransactionsByMonth = (transactions: Transaction[]): MonthlyGr
 				expense: 0,
 				balance: 0,
 				count: 0,
+				dailyGroups: [],
 			};
 		}
 
@@ -119,6 +131,44 @@ export const groupTransactionsByMonth = (transactions: Transaction[]): MonthlyGr
 		return acc;
 	}, {} as Record<string, MonthlyGroup>);
 
-	return Object.values(grouped).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+	// 为每个月创建按天的分组
+	const monthlyGroups = Object.values(grouped).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+
+	monthlyGroups.forEach(monthGroup => {
+		const dailyGrouped = monthGroup.transactions.reduce((acc, transaction) => {
+			const dateKey = formatDate(transaction.date);
+
+			if (!acc[dateKey]) {
+				const date = new Date(transaction.date);
+				const dateDisplay = format(date, 'M月d日');
+				acc[dateKey] = {
+					date: dateKey,
+					dateDisplay,
+					transactions: [],
+					income: 0,
+					expense: 0,
+					balance: 0,
+					count: 0,
+				};
+			}
+
+			acc[dateKey].transactions.push(transaction);
+			acc[dateKey].count += 1;
+
+			if (transaction.type === 'income') {
+				acc[dateKey].income += transaction.amount;
+			} else {
+				acc[dateKey].expense += transaction.amount;
+			}
+
+			acc[dateKey].balance = acc[dateKey].income - acc[dateKey].expense;
+
+			return acc;
+		}, {} as Record<string, DailyGroup>);
+
+		monthGroup.dailyGroups = Object.values(dailyGrouped).sort((a, b) => b.date.localeCompare(a.date));
+	});
+
+	return monthlyGroups;
 };
 
