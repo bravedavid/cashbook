@@ -48,10 +48,47 @@ export const calculateBalance = (transactions: Transaction[]): number => {
 	return income - expense;
 };
 
+// 清理分类ID，确保格式一致（去掉名称部分）
+const cleanCategoryId = (categoryId: string): string => {
+	if (!categoryId) return categoryId;
+	
+	// 处理自定义分类ID格式问题
+	if (categoryId.startsWith('custom-')) {
+		// 优先处理 custom-xxx:名称 格式（使用 : 分隔）
+		const colonMatch = categoryId.match(/^(custom-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}):(.+)$/);
+		if (colonMatch) {
+			return colonMatch[1];
+		}
+		
+		// 处理 custom-xxx-名称 格式（使用 - 分隔）
+		// UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（5段）
+		// 自定义分类ID：custom-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（6段）
+		const parts = categoryId.split('-');
+		if (parts.length > 6) {
+			// 提取前6段作为纯ID（custom + UUID的5段）
+			return parts.slice(0, 6).join('-');
+		}
+	} else {
+		// 对于系统分类，也可能有类似问题，尝试清理
+		// 系统分类格式：id-名称 或 id:名称
+		const systemMatch = categoryId.match(/^([a-z-]+)[-:](.+)$/);
+		if (systemMatch) {
+			// 检查是否是有效的系统分类ID
+			const systemIds = ['salary', 'bonus', 'investment', 'gift', 'other-income', 'food', 'transport', 'shopping', 'entertainment', 'bills', 'health', 'education', 'other-expense'];
+			if (systemIds.includes(systemMatch[1])) {
+				return systemMatch[1];
+			}
+		}
+	}
+	
+	return categoryId;
+};
+
 export const groupByCategory = (transactions: Transaction[], type: 'income' | 'expense') => {
 	const filtered = transactions.filter((t) => t.type === type);
 	const grouped = filtered.reduce((acc, t) => {
-		acc[t.category] = (acc[t.category] || 0) + t.amount;
+		const cleanId = cleanCategoryId(t.category);
+		acc[cleanId] = (acc[cleanId] || 0) + t.amount;
 		return acc;
 	}, {} as Record<string, number>);
 	return Object.entries(grouped).map(([category, amount]) => ({ category, amount }));
