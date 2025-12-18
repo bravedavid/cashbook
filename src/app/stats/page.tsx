@@ -18,7 +18,7 @@ import {
 	Legend,
 	ResponsiveContainer,
 } from 'recharts';
-import { ArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft, Settings, PieChart as PieChartIcon, BarChart3, Table } from 'lucide-react';
 import Link from 'next/link';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#6b7280'];
@@ -38,10 +38,14 @@ const formatPieLabel = (props: { name?: string; percent?: number }): string => {
 	return `${nameValue} ${(percentValue * 100).toFixed(0)}%`;
 };
 
+type ChartViewType = 'pie' | 'bar' | 'table';
+
 export default function StatsPage() {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [timeRange, setTimeRange] = useState<'all' | 'month' | 'year'>('all');
 	const [allCategories, setAllCategories] = useState<Category[]>([]);
+	const [incomeView, setIncomeView] = useState<ChartViewType>('bar');
+	const [expenseView, setExpenseView] = useState<ChartViewType>('bar');
 
 	useEffect(() => {
 		loadTransactions();
@@ -178,15 +182,55 @@ export default function StatsPage() {
 		return id;
 	};
 
-	const incomeChartData = incomeByCategory.map((item) => ({
+	// 数据聚合函数：将小分类合并为"其他"
+	const aggregateSmallCategories = (data: Array<{ name: string; value: number }>, thresholdPercent: number = 3) => {
+		const total = data.reduce((sum, item) => sum + item.value, 0);
+		const threshold = total * (thresholdPercent / 100);
+		
+		const mainCategories: Array<{ name: string; value: number }> = [];
+		let otherTotal = 0;
+		const otherCategories: string[] = [];
+		
+		data.forEach((item) => {
+			if (item.value >= threshold) {
+				mainCategories.push(item);
+			} else {
+				otherTotal += item.value;
+				otherCategories.push(item.name);
+			}
+		});
+		
+		// 按金额降序排序
+		mainCategories.sort((a, b) => b.value - a.value);
+		
+		// 如果有小分类，添加"其他"项
+		if (otherTotal > 0) {
+			mainCategories.push({
+				name: `其他 (${otherCategories.length}项)`,
+				value: otherTotal,
+			});
+		}
+		
+		return mainCategories;
+	};
+
+	const incomeChartDataRaw = incomeByCategory.map((item) => ({
 		name: getCategoryName(item.category),
 		value: item.amount,
 	}));
 
-	const expenseChartData = expenseByCategory.map((item) => ({
+	const expenseChartDataRaw = expenseByCategory.map((item) => ({
 		name: getCategoryName(item.category),
 		value: item.amount,
 	}));
+
+	// 聚合后的图表数据（用于饼图和柱状图）
+	const incomeChartData = aggregateSmallCategories(incomeChartDataRaw, 3);
+	const expenseChartData = aggregateSmallCategories(expenseChartDataRaw, 3);
+
+	// 原始数据（用于表格视图）
+	const incomeTableData = incomeChartDataRaw.sort((a, b) => b.value - a.value);
+	const expenseTableData = expenseChartDataRaw.sort((a, b) => b.value - a.value);
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -293,103 +337,226 @@ export default function StatsPage() {
 						</div>
 					)}
 
-					{/* 收入分类饼图 */}
+					{/* 收入分类图表 */}
 					{incomeChartData.length > 0 && allCategories.length > 0 && (
 						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">收入分类分布</h2>
-							<ResponsiveContainer width="100%" height={300}>
-								<PieChart>
-									<Pie
-										data={incomeChartData}
-										cx="50%"
-										cy="50%"
-										labelLine={false}
-										label={formatPieLabel}
-										outerRadius={100}
-										fill="#8884d8"
-										dataKey="value"
+							<div className="flex items-center justify-between mb-6">
+								<h2 className="text-xl font-bold text-gray-900 dark:text-white">收入分类分布</h2>
+								<div className="flex gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+									<button
+										onClick={() => setIncomeView('pie')}
+										className={`p-2 rounded transition-colors ${
+											incomeView === 'pie'
+												? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+												: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+										}`}
+										title="饼图"
 									>
-										{incomeChartData.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-										))}
-									</Pie>
-									<Tooltip formatter={formatCurrencyValue} />
-								</PieChart>
-							</ResponsiveContainer>
+										<PieChartIcon className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() => setIncomeView('bar')}
+										className={`p-2 rounded transition-colors ${
+											incomeView === 'bar'
+												? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+												: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+										}`}
+										title="柱状图"
+									>
+										<BarChart3 className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() => setIncomeView('table')}
+										className={`p-2 rounded transition-colors ${
+											incomeView === 'table'
+												? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+												: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+										}`}
+										title="表格"
+									>
+										<Table className="w-4 h-4" />
+									</button>
+								</div>
+							</div>
+							{incomeView === 'pie' && (
+								<ResponsiveContainer width="100%" height={300}>
+									<PieChart>
+										<Pie
+											data={incomeChartData}
+											cx="50%"
+											cy="50%"
+											labelLine={false}
+											label={formatPieLabel}
+											outerRadius={100}
+											fill="#8884d8"
+											dataKey="value"
+										>
+											{incomeChartData.map((entry, index) => (
+												<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+											))}
+										</Pie>
+										<Tooltip formatter={formatCurrencyValue} />
+									</PieChart>
+								</ResponsiveContainer>
+							)}
+							{incomeView === 'bar' && (
+								<ResponsiveContainer width="100%" height={300}>
+									<BarChart data={incomeChartData}>
+										<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+										<XAxis dataKey="name" stroke="#6b7280" tick={{ fill: '#6b7280' }} angle={-45} textAnchor="end" height={100} />
+										<YAxis stroke="#6b7280" tick={{ fill: '#6b7280' }} />
+										<Tooltip
+											contentStyle={{
+												backgroundColor: 'rgba(255, 255, 255, 0.95)',
+												border: '1px solid #e5e7eb',
+												borderRadius: '8px',
+											}}
+											formatter={formatCurrencyValue}
+										/>
+										<Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
+									</BarChart>
+								</ResponsiveContainer>
+							)}
+							{incomeView === 'table' && (
+								<div className="overflow-x-auto">
+									<table className="w-full">
+										<thead>
+											<tr className="border-b border-gray-200 dark:border-gray-700">
+												<th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">分类</th>
+												<th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">金额</th>
+												<th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">占比</th>
+											</tr>
+										</thead>
+										<tbody>
+											{incomeTableData.map((item, index) => {
+												const percent = income > 0 ? ((item.value / income) * 100).toFixed(1) : '0.0';
+												return (
+													<tr key={index} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+														<td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{item.name}</td>
+														<td className="py-3 px-4 text-sm text-right font-medium text-green-600 dark:text-green-400">
+															{formatCurrency(item.value)}
+														</td>
+														<td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{percent}%</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
+							)}
 						</div>
 					)}
 
-					{/* 支出分类饼图 */}
+					{/* 支出分类图表 */}
 					{expenseChartData.length > 0 && allCategories.length > 0 && (
 						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">支出分类分布</h2>
-							<ResponsiveContainer width="100%" height={300}>
-								<PieChart>
-									<Pie
-										data={expenseChartData}
-										cx="50%"
-										cy="50%"
-										labelLine={false}
-										label={formatPieLabel}
-										outerRadius={100}
-										fill="#8884d8"
-										dataKey="value"
+							<div className="flex items-center justify-between mb-6">
+								<h2 className="text-xl font-bold text-gray-900 dark:text-white">支出分类分布</h2>
+								<div className="flex gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+									<button
+										onClick={() => setExpenseView('pie')}
+										className={`p-2 rounded transition-colors ${
+											expenseView === 'pie'
+												? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+												: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+										}`}
+										title="饼图"
 									>
-										{expenseChartData.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-										))}
-									</Pie>
-									<Tooltip formatter={formatCurrencyValue} />
-								</PieChart>
-							</ResponsiveContainer>
+										<PieChartIcon className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() => setExpenseView('bar')}
+										className={`p-2 rounded transition-colors ${
+											expenseView === 'bar'
+												? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+												: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+										}`}
+										title="柱状图"
+									>
+										<BarChart3 className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() => setExpenseView('table')}
+										className={`p-2 rounded transition-colors ${
+											expenseView === 'table'
+												? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+												: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+										}`}
+										title="表格"
+									>
+										<Table className="w-4 h-4" />
+									</button>
+								</div>
+							</div>
+							{expenseView === 'pie' && (
+								<ResponsiveContainer width="100%" height={300}>
+									<PieChart>
+										<Pie
+											data={expenseChartData}
+											cx="50%"
+											cy="50%"
+											labelLine={false}
+											label={formatPieLabel}
+											outerRadius={100}
+											fill="#8884d8"
+											dataKey="value"
+										>
+											{expenseChartData.map((entry, index) => (
+												<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+											))}
+										</Pie>
+										<Tooltip formatter={formatCurrencyValue} />
+									</PieChart>
+								</ResponsiveContainer>
+							)}
+							{expenseView === 'bar' && (
+								<ResponsiveContainer width="100%" height={300}>
+									<BarChart data={expenseChartData}>
+										<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+										<XAxis dataKey="name" stroke="#6b7280" tick={{ fill: '#6b7280' }} angle={-45} textAnchor="end" height={100} />
+										<YAxis stroke="#6b7280" tick={{ fill: '#6b7280' }} />
+										<Tooltip
+											contentStyle={{
+												backgroundColor: 'rgba(255, 255, 255, 0.95)',
+												border: '1px solid #e5e7eb',
+												borderRadius: '8px',
+											}}
+											formatter={formatCurrencyValue}
+										/>
+										<Bar dataKey="value" fill="#ef4444" radius={[8, 8, 0, 0]} />
+									</BarChart>
+								</ResponsiveContainer>
+							)}
+							{expenseView === 'table' && (
+								<div className="overflow-x-auto">
+									<table className="w-full">
+										<thead>
+											<tr className="border-b border-gray-200 dark:border-gray-700">
+												<th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">分类</th>
+												<th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">金额</th>
+												<th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">占比</th>
+											</tr>
+										</thead>
+										<tbody>
+											{expenseTableData.map((item, index) => {
+												const percent = expense > 0 ? ((item.value / expense) * 100).toFixed(1) : '0.0';
+												return (
+													<tr key={index} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+														<td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{item.name}</td>
+														<td className="py-3 px-4 text-sm text-right font-medium text-red-600 dark:text-red-400">
+															{formatCurrency(item.value)}
+														</td>
+														<td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{percent}%</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
+							)}
 						</div>
 					)}
 
-					{/* 支出分类柱状图 */}
-					{expenseChartData.length > 0 && allCategories.length > 0 && (
-						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">支出分类对比</h2>
-							<ResponsiveContainer width="100%" height={300}>
-								<BarChart data={expenseChartData}>
-									<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-									<XAxis dataKey="name" stroke="#6b7280" tick={{ fill: '#6b7280' }} />
-									<YAxis stroke="#6b7280" tick={{ fill: '#6b7280' }} />
-									<Tooltip
-										contentStyle={{
-											backgroundColor: 'rgba(255, 255, 255, 0.95)',
-											border: '1px solid #e5e7eb',
-											borderRadius: '8px',
-										}}
-										formatter={formatCurrencyValue}
-									/>
-									<Bar dataKey="value" fill="#ef4444" radius={[8, 8, 0, 0]} />
-								</BarChart>
-							</ResponsiveContainer>
-						</div>
-					)}
-
-					{/* 收入分类柱状图 */}
-					{incomeChartData.length > 0 && allCategories.length > 0 && (
-						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">收入分类对比</h2>
-							<ResponsiveContainer width="100%" height={300}>
-								<BarChart data={incomeChartData}>
-									<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-									<XAxis dataKey="name" stroke="#6b7280" tick={{ fill: '#6b7280' }} />
-									<YAxis stroke="#6b7280" tick={{ fill: '#6b7280' }} />
-									<Tooltip
-										contentStyle={{
-											backgroundColor: 'rgba(255, 255, 255, 0.95)',
-											border: '1px solid #e5e7eb',
-											borderRadius: '8px',
-										}}
-										formatter={formatCurrencyValue}
-									/>
-									<Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} />
-								</BarChart>
-							</ResponsiveContainer>
-						</div>
-					)}
 				</div>
 			</div>
 		</div>
