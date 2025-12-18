@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
 			getUserCategories(user.id, 'expense'),
 		]);
 
-		// 格式化分类信息用于 prompt
+		// 格式化分类信息用于 prompt（使用冒号分隔，避免与自定义分类ID中的连字符冲突）
 		const formatCategories = (categories: typeof incomeCategories, type: 'income' | 'expense') => {
-			return categories.map(cat => `${cat.id}-${cat.name}`).join(', ');
+			return categories.map(cat => `${cat.id}:${cat.name}`).join(', ');
 		};
 
 		const incomeCategoriesText = formatCategories(incomeCategories, 'income');
@@ -112,8 +112,9 @@ export async function POST(request: NextRequest) {
 ]
 
 重要提示：
-- 分类ID必须完全匹配上述提供的分类列表中的ID
-- 如果是自定义分类，使用完整的ID（如 custom-xxx）
+- 分类ID必须完全匹配上述提供的分类列表中的ID（只返回ID部分，不要包含名称）
+- 例如：如果分类是 "food:餐饮"，category 字段应该只填写 "food"，不要写成 "food-餐饮" 或 "food:餐饮"
+- 如果是自定义分类，使用完整的ID（如 custom-xxx），同样只返回ID部分，不要添加名称
 - 如果图片中没有交易记录或无法识别，返回空数组 []
 - 只返回 JSON 数组，不要包含其他文字说明
 
@@ -192,14 +193,53 @@ export async function POST(request: NextRequest) {
 						typeof (t as TransactionItem).description === 'string'
 					);
 				})
-				.map((t: TransactionItem) => ({
-					date: t.date,
-					amount: Math.abs(t.amount),
-					type: t.type,
-					category: t.category,
-					description: t.description || '',
-					originalInfo: t.originalInfo || '',
-				}));
+				.map((t: TransactionItem) => {
+					// 清理分类ID：如果分类ID包含名称部分，只保留纯ID部分
+					let cleanCategory = t.category;
+					
+					// 处理格式：custom-xxx-名称 或 custom-xxx:名称
+					// 自定义分类ID格式：custom-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（UUID格式，6段用-分隔）
+					// 如果后面还有内容，那就是名称部分，需要去掉
+					if (cleanCategory.startsWith('custom-')) {
+						// 优先处理 custom-xxx:名称 格式（使用 : 分隔，更明确）
+						// UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（5段）
+						// 自定义分类ID：custom-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（6段）
+						const colonMatch = cleanCategory.match(/^(custom-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}):(.+)$/);
+						if (colonMatch) {
+							cleanCategory = colonMatch[1];
+						} else {
+							// 处理 custom-xxx-名称 格式（使用 - 分隔）
+							const parts = cleanCategory.split('-');
+							// UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（5段）
+							// 加上custom前缀，总共6段
+							// 如果超过6段，多出来的就是名称部分
+							if (parts.length > 6) {
+								// 提取前6段作为纯ID（custom + UUID的5段）
+								cleanCategory = parts.slice(0, 6).join('-');
+							}
+						}
+					} else {
+						// 对于系统分类，也可能有类似问题，尝试清理
+						// 系统分类格式：id-名称 或 id:名称
+						const systemMatch = cleanCategory.match(/^([a-z-]+)[-:](.+)$/);
+						if (systemMatch) {
+							// 检查是否是有效的系统分类ID
+							const systemIds = ['salary', 'bonus', 'investment', 'gift', 'other-income', 'food', 'transport', 'shopping', 'entertainment', 'bills', 'health', 'education', 'other-expense'];
+							if (systemIds.includes(systemMatch[1])) {
+								cleanCategory = systemMatch[1];
+							}
+						}
+					}
+
+					return {
+						date: t.date,
+						amount: Math.abs(t.amount),
+						type: t.type,
+						category: cleanCategory,
+						description: t.description || '',
+						originalInfo: t.originalInfo || '',
+					};
+				});
 		} catch (parseError) {
 			console.error('JSON 解析错误:', parseError);
 			console.error('原始内容:', content);

@@ -38,13 +38,9 @@ const formatPieLabel = (props: { name?: string; percent?: number }): string => {
 	return `${nameValue} ${(percentValue * 100).toFixed(0)}%`;
 };
 
-type TimeRangeType = 'all' | 'month' | 'year' | 'custom';
-
 export default function StatsPage() {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
-	const [timeRange, setTimeRange] = useState<TimeRangeType>('all');
-	const [customStartDate, setCustomStartDate] = useState<string>('');
-	const [customEndDate, setCustomEndDate] = useState<string>('');
+	const [timeRange, setTimeRange] = useState<'all' | 'month' | 'year'>('all');
 	const [allCategories, setAllCategories] = useState<Category[]>([]);
 
 	useEffect(() => {
@@ -82,44 +78,19 @@ export default function StatsPage() {
 		}
 	};
 
-	const handleTimeRangeChange = (newRange: TimeRangeType) => {
-		setTimeRange(newRange);
-		// 如果切换到非自定义范围，清除自定义日期
-		if (newRange !== 'custom') {
-			setCustomStartDate('');
-			setCustomEndDate('');
-		}
-	};
-
 	const filteredTransactions = useMemo(() => {
 		if (timeRange === 'all') return transactions;
-
 		const now = new Date();
-		let startDate: Date | null = null;
-		let endDate: Date | null = null;
-
 		if (timeRange === 'month') {
-			startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-		} else if (timeRange === 'year') {
-			startDate = new Date(now.getFullYear(), 0, 1);
-		} else if (timeRange === 'custom') {
-			if (customStartDate) {
-				startDate = new Date(customStartDate);
-			}
-			if (customEndDate) {
-				endDate = new Date(customEndDate);
-				// 设置结束日期为当天的23:59:59
-				endDate.setHours(23, 59, 59, 999);
-			}
+			const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+			return transactions.filter((t) => new Date(t.date) >= startOfMonth);
 		}
-
-		return transactions.filter((t) => {
-			const transactionDate = new Date(t.date);
-			if (startDate && transactionDate < startDate) return false;
-			if (endDate && transactionDate > endDate) return false;
-			return true;
-		});
-	}, [transactions, timeRange, customStartDate, customEndDate]);
+		if (timeRange === 'year') {
+			const startOfYear = new Date(now.getFullYear(), 0, 1);
+			return transactions.filter((t) => new Date(t.date) >= startOfYear);
+		}
+		return transactions;
+	}, [transactions, timeRange]);
 
 	const income = calculateTotal(filteredTransactions, 'income');
 	const expense = calculateTotal(filteredTransactions, 'expense');
@@ -130,12 +101,81 @@ export default function StatsPage() {
 	const dailyData = groupByDate(filteredTransactions);
 
 	const getCategoryName = (id: string) => {
-		const category = allCategories.find((c) => c.id === id);
-		if (!category) {
-			console.warn('Category not found:', id, 'Available categories:', allCategories.map(c => `${c.id}:${c.name}`));
-			return id; // 如果找不到分类，返回ID
+		if (!id) {
+			return '未知分类';
 		}
-		return category.name;
+
+		// 首先尝试精确匹配
+		const category = allCategories.find((c) => c.id === id);
+		if (category) {
+			return category.name;
+		}
+
+		// 如果找不到，可能是ID格式有问题（包含了名称）
+		// 自定义分类ID格式：custom-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（UUID格式）
+		// 如果ID后面有额外的内容（名称），需要提取纯ID部分
+		
+		// 处理格式：custom-xxx-名称 或 custom-xxx:名称
+		// UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（5段，用-分隔）
+		// 自定义分类ID：custom-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（6段，用-分隔）
+		// 如果后面还有内容，那就是名称部分
+		
+		// 尝试匹配 custom-xxx-名称 格式
+		// UUID有5段，加上custom前缀，总共6段，如果超过6段，多出来的就是名称
+		const parts = id.split('-');
+		if (parts.length > 6 && parts[0] === 'custom') {
+			// 提取前6段作为纯ID（custom + UUID的5段）
+			const pureId = parts.slice(0, 6).join('-');
+			const categoryByPureId = allCategories.find((c) => c.id === pureId);
+			if (categoryByPureId) {
+				return categoryByPureId.name;
+			}
+			// 如果还是找不到，返回提取的名称部分（第7段及之后）
+			const namePart = parts.slice(6).join('-');
+			if (/[\u4e00-\u9fa5]/.test(namePart)) {
+				return namePart;
+			}
+		}
+
+		// 尝试匹配 custom-xxx:名称 格式（使用 : 分隔）
+		// UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（5段）
+		// 自定义分类ID：custom-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx（6段）
+		const colonMatch = id.match(/^(custom-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}):(.+)$/);
+		if (colonMatch) {
+			const pureId = colonMatch[1];
+			const categoryByPureId = allCategories.find((c) => c.id === pureId);
+			if (categoryByPureId) {
+				return categoryByPureId.name;
+			}
+			// 如果还是找不到，返回提取的名称部分
+			return colonMatch[2];
+		}
+
+		// 尝试部分匹配（ID包含关系）
+		// 检查交易记录的ID是否以某个分类ID开头（后面跟着 - 或 :）
+		// 这是最通用的匹配方式，可以处理各种格式问题
+		const prefixMatch = allCategories.find((c) => {
+			// 检查ID是否以分类ID开头，并且后面跟着分隔符（- 或 :）
+			return (id.startsWith(c.id + '-') && id.length > c.id.length + 1) || 
+			       (id.startsWith(c.id + ':') && id.length > c.id.length + 1);
+		});
+		if (prefixMatch) {
+			return prefixMatch.name;
+		}
+
+		// 如果都找不到，尝试从ID中提取名称部分
+		// 假设名称是最后一个分隔符后的内容（且包含中文）
+		if (parts.length > 1) {
+			const possibleName = parts[parts.length - 1];
+			// 如果最后一部分看起来像中文（不是UUID的一部分），返回它
+			if (/[\u4e00-\u9fa5]/.test(possibleName)) {
+				return possibleName;
+			}
+		}
+
+		// 最后降级：返回ID本身
+		console.warn('Category not found:', id, 'Available categories:', allCategories.map(c => `${c.id}:${c.name}`));
+		return id;
 	};
 
 	const incomeChartData = incomeByCategory.map((item) => ({
@@ -173,9 +213,9 @@ export default function StatsPage() {
 						>
 							<Settings className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 						</Link>
-						<div className="flex gap-2 items-center">
+						<div className="flex gap-2">
 							<button
-								onClick={() => handleTimeRangeChange('all')}
+								onClick={() => setTimeRange('all')}
 								className={`px-4 py-2 rounded-lg transition-colors ${
 									timeRange === 'all'
 										? 'bg-blue-600 text-white'
@@ -185,7 +225,7 @@ export default function StatsPage() {
 								全部
 							</button>
 							<button
-								onClick={() => handleTimeRangeChange('month')}
+								onClick={() => setTimeRange('month')}
 								className={`px-4 py-2 rounded-lg transition-colors ${
 									timeRange === 'month'
 										? 'bg-blue-600 text-white'
@@ -195,7 +235,7 @@ export default function StatsPage() {
 								本月
 							</button>
 							<button
-								onClick={() => handleTimeRangeChange('year')}
+								onClick={() => setTimeRange('year')}
 								className={`px-4 py-2 rounded-lg transition-colors ${
 									timeRange === 'year'
 										? 'bg-blue-600 text-white'
@@ -204,40 +244,6 @@ export default function StatsPage() {
 							>
 								本年
 							</button>
-							<button
-								onClick={() => handleTimeRangeChange('custom')}
-								className={`px-4 py-2 rounded-lg transition-colors ${
-									timeRange === 'custom'
-										? 'bg-blue-600 text-white'
-										: 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-								}`}
-							>
-								自定义
-							</button>
-
-							{/* 自定义日期选择器 */}
-							{timeRange === 'custom' && (
-								<div className="flex gap-2 items-center ml-4">
-									<div className="flex items-center gap-2">
-										<label className="text-sm text-gray-600 dark:text-gray-400">开始:</label>
-										<input
-											type="date"
-											value={customStartDate}
-											onChange={(e) => setCustomStartDate(e.target.value)}
-											className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-										/>
-									</div>
-									<div className="flex items-center gap-2">
-										<label className="text-sm text-gray-600 dark:text-gray-400">结束:</label>
-										<input
-											type="date"
-											value={customEndDate}
-											onChange={(e) => setCustomEndDate(e.target.value)}
-											className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-										/>
-									</div>
-								</div>
-							)}
 						</div>
 					</div>
 				</div>
