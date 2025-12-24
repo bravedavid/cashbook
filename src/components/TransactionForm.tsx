@@ -60,64 +60,64 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-			<div className="flex items-center justify-between mb-6">
-				<h2 className="text-xl font-bold text-gray-900 dark:text-white">{mode === 'edit' ? '编辑记录' : '添加记录'}</h2>
+		<form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm">
+			<div className="flex items-center justify-between mb-8">
+				<h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{mode === 'edit' ? '编辑记录' : '新增记录'}</h2>
 				{onCancel && (
 					<button
 						type="button"
 						onClick={onCancel}
-						className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+						className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
 					>
-						<X className="w-5 h-5" />
+						<X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
 					</button>
 				)}
 			</div>
 
-			<div className="space-y-4">
+			<div className="space-y-6">
 				{/* 类型选择 */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">类型</label>
-					<div className="flex gap-2">
+					<label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">交易类型</label>
+					<div className="flex gap-3">
 						<button
 							type="button"
 							onClick={() => {
 								setFormData({ ...formData, type: 'income', category: '' });
 							}}
-							className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+							className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 ${
 								formData.type === 'income'
-									? 'bg-green-500 text-white shadow-md'
-									: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+									? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg scale-105'
+									: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
 							}`}
 						>
-							收入
+							💰 收入
 						</button>
 						<button
 							type="button"
 							onClick={() => {
 								setFormData({ ...formData, type: 'expense', category: '' });
 							}}
-							className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+							className={`flex-1 py-3 sm:py-4 px-4 rounded-xl font-semibold transition-all duration-200 ${
 								formData.type === 'expense'
-									? 'bg-red-500 text-white shadow-md'
-									: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+									? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg scale-105'
+									: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
 							}`}
 						>
-							支出
+							💸 支出
 						</button>
 					</div>
 				</div>
 
 				{/* 金额 */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">金额</label>
+					<label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">金额</label>
 					<input
 						type="number"
 						step="0.01"
 						min="0"
 						value={formData.amount}
 						onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-						className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="w-full px-4 py-3 sm:py-4 text-lg border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
 						placeholder="0.00"
 						required
 					/>
@@ -125,21 +125,21 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 
 				{/* 分类 */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">分类</label>
-					<div className="grid grid-cols-4 gap-2">
+					<label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">分类</label>
+					<div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
 						{categories.map((cat) => (
 							<button
 								key={cat.id}
 								type="button"
 								onClick={() => setFormData({ ...formData, category: cat.id })}
-								className={`p-3 rounded-lg border-2 transition-all ${
+								className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1 ${
 									formData.category === cat.id
-										? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+										? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md scale-110'
 										: 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 hover:border-gray-300'
 								}`}
 							>
-								<div className="text-2xl mb-1">{cat.icon}</div>
-								<div className="text-xs text-gray-700 dark:text-gray-300">{cat.name}</div>
+								<div className="text-2xl sm:text-3xl">{cat.icon}</div>
+								<div className="text-xs text-gray-700 dark:text-gray-300 text-center">{cat.name}</div>
 							</button>
 						))}
 					</div>
@@ -147,36 +147,36 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 
 				{/* 描述 */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">描述</label>
+					<label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">描述</label>
 					<input
 						type="text"
 						value={formData.description}
 						onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-						className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-						placeholder="简要描述（可选）"
+						className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+						placeholder="添加一个描述（可选）"
 					/>
 				</div>
 
 				{/* 备注 */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">备注</label>
+					<label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">备注</label>
 					<textarea
 						value={formData.note || ''}
 						onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-						className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-						placeholder="原始交易信息、详细备注等（可选）"
+						className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
+						placeholder="添加更多信息（可选）"
 						rows={3}
 					/>
 				</div>
 
 				{/* 日期 */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">日期</label>
+					<label className="block text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">日期</label>
 					<input
 						type="date"
 						value={formData.date}
 						onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-						className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
 						required
 					/>
 				</div>
@@ -184,9 +184,9 @@ export default function TransactionForm({ onSubmit, onCancel, initialData, mode 
 				{/* 提交按钮 */}
 				<button
 					type="submit"
-					className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+					className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-lg"
 				>
-					<Plus className="w-5 h-5" />
+					<Plus className="w-6 h-6" />
 					{mode === 'edit' ? '保存修改' : '添加记录'}
 				</button>
 			</div>

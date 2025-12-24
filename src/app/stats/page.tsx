@@ -233,57 +233,57 @@ export default function StatsPage() {
 	const expenseTableData = expenseChartDataRaw.sort((a, b) => b.value - a.value);
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-			<div className="max-w-7xl mx-auto px-4 py-8">
+		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 				{/* 头部 */}
-				<div className="flex items-center justify-between mb-8">
-					<div className="flex items-center gap-4">
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+					<div className="flex items-start gap-4">
 						<Link
 							href="/"
-							className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+							className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-full transition-colors duration-200 mt-0.5"
 						>
-							<ArrowLeft className="w-6 h-6" />
+							<ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 						</Link>
 						<div>
-							<h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">统计图表</h1>
-							<p className="text-gray-500 dark:text-gray-400">可视化分析你的财务状况</p>
+							<h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">统计图表</h1>
+							<p className="text-gray-600 dark:text-gray-400 text-base">可视化分析你的财务状况</p>
 						</div>
 					</div>
-					<div className="flex items-center gap-3">
+					<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
 						<Link
 							href="/settings"
-							className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+							className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-full transition-colors duration-200"
 							title="设置"
 						>
 							<Settings className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 						</Link>
-						<div className="flex gap-2">
+						<div className="flex gap-2 bg-gray-100 dark:bg-gray-700/30 rounded-full p-1.5 border border-gray-200 dark:border-gray-600/30">
 							<button
 								onClick={() => setTimeRange('all')}
-								className={`px-4 py-2 rounded-lg transition-colors ${
+								className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
 									timeRange === 'all'
-										? 'bg-blue-600 text-white'
-										: 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+										? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md'
+										: 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
 								}`}
 							>
 								全部
 							</button>
 							<button
 								onClick={() => setTimeRange('month')}
-								className={`px-4 py-2 rounded-lg transition-colors ${
+								className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
 									timeRange === 'month'
-										? 'bg-blue-600 text-white'
-										: 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+										? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md'
+										: 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
 								}`}
 							>
 								本月
 							</button>
 							<button
 								onClick={() => setTimeRange('year')}
-								className={`px-4 py-2 rounded-lg transition-colors ${
+								className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
 									timeRange === 'year'
-										? 'bg-blue-600 text-white'
-										: 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+										? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md'
+										: 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
 								}`}
 							>
 								本年
@@ -293,30 +293,30 @@ export default function StatsPage() {
 				</div>
 
 				{/* 统计摘要 */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-					<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-						<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">总收入</div>
-						<div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(income)}</div>
+				<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-10">
+					<div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-6 sm:p-8 shadow-lg border border-green-200 dark:border-green-800/40 transition-all duration-200 hover:shadow-xl hover:scale-105">
+						<div className="text-sm sm:text-base font-semibold text-green-700 dark:text-green-400 mb-2">总收入</div>
+						<div className="text-3xl sm:text-4xl font-bold text-green-700 dark:text-green-400">{formatCurrency(income)}</div>
 					</div>
-					<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-						<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">总支出</div>
-						<div className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(expense)}</div>
+					<div className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-2xl p-6 sm:p-8 shadow-lg border border-red-200 dark:border-red-800/40 transition-all duration-200 hover:shadow-xl hover:scale-105">
+						<div className="text-sm sm:text-base font-semibold text-red-700 dark:text-red-400 mb-2">总支出</div>
+						<div className="text-3xl sm:text-4xl font-bold text-red-700 dark:text-red-400">{formatCurrency(expense)}</div>
 					</div>
-					<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-						<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">余额</div>
-						<div className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+					<div className={`bg-gradient-to-br ${balance >= 0 ? 'from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20' : 'from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20'} rounded-2xl p-6 sm:p-8 shadow-lg ${balance >= 0 ? 'border-blue-200 dark:border-blue-800/40' : 'border-orange-200 dark:border-orange-800/40'} border transition-all duration-200 hover:shadow-xl hover:scale-105`}>
+						<div className={`text-sm sm:text-base font-semibold ${balance >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-orange-700 dark:text-orange-400'} mb-2`}>余额</div>
+						<div className={`text-3xl sm:text-4xl font-bold ${balance >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-orange-700 dark:text-orange-400'}`}>
 							{formatCurrency(balance)}
 						</div>
 					</div>
 				</div>
 
 				{/* 图表区域 */}
-				<div className="space-y-8">
+				<div className="space-y-8 mt-10">
 					{/* 每日收支趋势 */}
 					{dailyData.length > 0 && (
-						<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">每日收支趋势</h2>
-							<ResponsiveContainer width="100%" height={300}>
+						<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm overflow-hidden">
+							<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">每日收支趋势</h2>
+							<ResponsiveContainer width="100%" height={350}>
 								<LineChart data={dailyData}>
 									<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 									<XAxis dataKey="date" stroke="#6b7280" tick={{ fill: '#6b7280' }} />

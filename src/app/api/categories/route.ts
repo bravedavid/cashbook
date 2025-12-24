@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getUserCategories, addCategory, getAllUserCategories } from '@/lib/categories';
-import { Category } from '@/types';
 
 export async function GET(request: NextRequest) {
 	try {

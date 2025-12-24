@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+
+// 强制动态渲染，避免预渲染错误
+export const dynamic = 'force-dynamic';
 import { RecognitionResult, TransactionItem, RecognitionResponse } from '@/types';
 import { fileToBase64 } from '@/lib/imageUtils';
 import { settings } from '@/lib/settings';
@@ -181,25 +184,25 @@ export default function ImportPage() {
 	const successCount = recognitionResults.filter((r) => r.status === 'success').length;
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-			<div className="max-w-4xl mx-auto px-4 py-8">
+		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+			<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 				{/* 头部 */}
-				<div className="flex items-center justify-between mb-8">
-					<div className="flex items-center gap-4">
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+					<div className="flex items-start gap-4">
 						<Link
 							href="/"
-							className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+							className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-full transition-colors duration-200 mt-0.5"
 						>
-							<ArrowLeft className="w-6 h-6" />
+							<ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
 						</Link>
 						<div>
-							<h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">导入银行流水</h1>
-							<p className="text-gray-500 dark:text-gray-400">上传银行流水图片，AI 将自动识别并提取交易记录</p>
+							<h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">导入银行流水</h1>
+							<p className="text-gray-600 dark:text-gray-400 text-base">上传银行流水图片，AI 将自动识别并提取交易记录</p>
 						</div>
 					</div>
 					<Link
 						href="/settings"
-						className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+						className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-full transition-colors duration-200"
 						title="设置"
 					>
 						<Settings className="w-6 h-6 text-gray-700 dark:text-gray-300" />
@@ -208,17 +211,18 @@ export default function ImportPage() {
 
 				{/* API Key 未配置提示 */}
 				{!hasApiKey && (
-					<div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 flex items-start gap-3">
-						<AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+					<div className="mb-8 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-l-4 border-amber-500 rounded-xl p-6 flex items-start gap-4">
+						<AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
 						<div className="flex-1">
-							<h3 className="font-medium text-yellow-900 dark:text-yellow-100 mb-1">需要配置 API Key</h3>
-							<p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
-								使用 AI 识别功能需要先配置 OpenRouter API Key
+							<h3 className="font-bold text-amber-900 dark:text-amber-100 mb-2 text-lg">需要配置 API Key</h3>
+							<p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
+								使用 AI 识别功能需要先配置 OpenRouter API Key。访问 <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:opacity-80">openrouter.ai</a> 获取密钥。
 							</p>
 							<Link
 								href="/settings"
-								className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors"
+								className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
 							>
+								<Settings className="w-5 h-5" />
 								前往设置
 							</Link>
 						</div>
@@ -227,36 +231,36 @@ export default function ImportPage() {
 
 				{/* 统计信息 */}
 				{(recognitionResults.length > 0 || savedCount > 0) && (
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-						<div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-							<div className="text-sm text-gray-600 dark:text-gray-400 mb-1">总图片</div>
-							<div className="text-2xl font-bold text-gray-900 dark:text-white">{recognitionResults.length}</div>
+					<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+						<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+							<div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">总图片</div>
+							<div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{recognitionResults.length}</div>
 						</div>
-						<div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-							<div className="text-sm text-gray-600 dark:text-gray-400 mb-1">处理中</div>
-							<div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{pendingCount}</div>
+						<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+							<div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">处理中</div>
+							<div className="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400">{pendingCount}</div>
 						</div>
-						<div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-							<div className="text-sm text-gray-600 dark:text-gray-400 mb-1">识别成功</div>
-							<div className="text-2xl font-bold text-green-600 dark:text-green-400">{successCount}</div>
+						<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+							<div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">识别成功</div>
+							<div className="text-3xl sm:text-4xl font-bold text-green-600 dark:text-green-400">{successCount}</div>
 						</div>
-						<div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-							<div className="text-sm text-gray-600 dark:text-gray-400 mb-1">已保存</div>
-							<div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{savedCount}</div>
+						<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+							<div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">已保存</div>
+							<div className="text-3xl sm:text-4xl font-bold text-purple-600 dark:text-purple-400">{savedCount}</div>
 						</div>
 					</div>
 				)}
 
 				{/* 图片上传 */}
 				{recognitionResults.length === 0 && (
-					<div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+					<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm mb-10 overflow-hidden">
 						<ImageUpload onImagesSelected={handleImagesSelected} />
 					</div>
 				)}
 
 				{/* 识别结果列表 */}
 				{recognitionResults.length > 0 && (
-					<div className="space-y-4">
+					<div className="space-y-4 mb-10">
 						{recognitionResults.map((result) => (
 							<RecognitionItem
 								key={result.id}
@@ -271,22 +275,25 @@ export default function ImportPage() {
 
 				{/* 添加更多图片 */}
 				{recognitionResults.length > 0 && (
-					<div className="mt-8 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-						<h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">添加更多图片</h3>
+					<div className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-gray-700/50 backdrop-blur-sm mb-10 overflow-hidden">
+						<h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">添加更多图片</h3>
 						<ImageUpload onImagesSelected={handleImagesSelected} />
 					</div>
 				)}
 
 				{/* 完成提示 */}
 				{savedCount > 0 && recognitionResults.length === 0 && (
-					<div className="mt-8 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 text-center">
-						<CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-600 dark:text-green-400" />
-						<h3 className="text-lg font-medium text-green-900 dark:text-green-100 mb-2">
+					<div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800/40 rounded-2xl p-8 sm:p-10 text-center shadow-lg">
+						<div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
+							<CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
+						</div>
+						<h3 className="text-2xl sm:text-3xl font-bold text-green-900 dark:text-green-100 mb-2">
 							成功导入 {savedCount} 条记录！
 						</h3>
+						<p className="text-green-800 dark:text-green-200 mb-6">所有交易记录已保存到你的账户</p>
 						<Link
 							href="/"
-							className="inline-block mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+							className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
 						>
 							返回首页
 						</Link>

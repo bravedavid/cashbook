@@ -44,12 +44,12 @@ export async function POST(request: NextRequest) {
 		]);
 
 		// 格式化分类信息用于 prompt（使用冒号分隔，避免与自定义分类ID中的连字符冲突）
-		const formatCategories = (categories: typeof incomeCategories, type: 'income' | 'expense') => {
+		const formatCategories = (categories: typeof incomeCategories) => {
 			return categories.map(cat => `${cat.id}:${cat.name}`).join(', ');
 		};
 
-		const incomeCategoriesText = formatCategories(incomeCategories, 'income');
-		const expenseCategoriesText = formatCategories(expenseCategories, 'expense');
+		const incomeCategoriesText = formatCategories(incomeCategories);
+		const expenseCategoriesText = formatCategories(expenseCategories);
 
 		// 获取 OpenRouter API Key（优先使用客户端提供的，否则使用环境变量）
 		const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY;
