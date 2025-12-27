@@ -9,7 +9,7 @@ interface ImageUploadProps {
 	maxFiles?: number;
 }
 
-export default function ImageUpload({ onImagesSelected, maxFiles = 10 }: ImageUploadProps) {
+export default function ImageUpload({ onImagesSelected, maxFiles = 20 }: ImageUploadProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [dragActive, setDragActive] = useState(false);
 	const [previewFiles, setPreviewFiles] = useState<File[]>([]);
